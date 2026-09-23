@@ -30,6 +30,7 @@ class OpenRadiossWorkbench(Gui.Workbench):
         "OpenCacheViewer",
         "ExportRadiossInput",
         "RunOpenRadioss",
+        "FEM_SolverOpenRadioss",
     ]
 
     def Initialize(self):
@@ -58,4 +59,11 @@ class OpenRadiossWorkbench(Gui.Workbench):
 
 
 Gui.addWorkbench(OpenRadiossWorkbench())
+
+# OpenRadioss as a FEM solver: registered at start so the FEM workbench shows it too
+try:
+    from .fem import commands as fem_commands
+    fem_commands.register()
+except Exception as e:  # FEM module missing or incompatible FreeCAD version
+    App.Console.PrintWarning(f"OpenRadioss: FEM solver integration not available: {e}\n")
 App.Console.PrintLog("Loading OpenRadioss workbench...\n")

@@ -24,7 +24,7 @@ dependencies = []
 source = "https://hexascan.de"
 
 [tool.setuptools]
-packages = ["freecad.ORfemn", "freecad.ORfemn.commands", "freecad.ORfemn.gui"]
+packages = ["freecad.ORfemn", "freecad.ORfemn.commands", "freecad.ORfemn.gui", "freecad.ORfemn.fem"]
 include-package-data = true
 
 [tool.setuptools.dynamic]

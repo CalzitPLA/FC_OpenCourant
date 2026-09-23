@@ -16,6 +16,12 @@ set(Namespace_SRCS
         freecad/ORfemn/commands/template_editor_command.py
         freecad/ORfemn/commands/run_solver_command.py
         freecad/ORfemn/gui/__init__.py
+        freecad/ORfemn/fem/__init__.py
+        freecad/ORfemn/fem/commands.py
+        freecad/ORfemn/fem/deck_writer.py
+        freecad/ORfemn/fem/model.py
+        freecad/ORfemn/fem/solver.py
+        freecad/ORfemn/fem/tasks.py
         freecad/ORfemn/gui/cache_viewer.py
         freecad/ORfemn/gui/keyword_editor.py
         freecad/ORfemn/gui/template_editor.py

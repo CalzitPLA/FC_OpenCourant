@@ -341,6 +341,115 @@ class OpenRadiossIntegrationTest(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(tmp, "basic.pvd")))
 
 
+_spec = importlib.util.spec_from_file_location("deck_writer", os.path.join(MODULE_DIR, "fem", "deck_writer.py"))
+deck_writer = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(deck_writer)
+
+
+def block_model(nx=4, ny=1, nz=1, size=10.0, **overrides):
+    """A cantilever block of hexahedra along x, fixed at x = 0 (for the deck writer tests)."""
+    nodes, nid = {}, {}
+    for k in range(nz + 1):
+        for j in range(ny + 1):
+            for i in range(nx + 1):
+                n = len(nodes) + 1
+                nodes[n] = (i * size, j * size, k * size)
+                nid[i, j, k] = n
+    elements = []
+    for k in range(nz):
+        for j in range(ny):
+            for i in range(nx):
+                elements.append((len(elements) + 1, [
+                    nid[i, j, k], nid[i + 1, j, k], nid[i + 1, j + 1, k], nid[i, j + 1, k],
+                    nid[i, j, k + 1], nid[i + 1, j, k + 1], nid[i + 1, j + 1, k + 1], nid[i, j + 1, k + 1]]))
+    tip = [n for (i, _j, _k), n in nid.items() if i == nx]
+    top = [[nid[i, j, nz], nid[i + 1, j, nz], nid[i + 1, j + 1, nz], nid[i, j + 1, nz]]
+           for i in range(nx) for j in range(ny)]  # counter-clockwise from above: normal +z (outward)
+    model = {
+        "title": "block", "end_time": 0.002, "output_interval": 0.0005, "load_curve": "ramp",
+        "nodes": nodes,
+        "parts": [{"pid": 1, "title": "Steel", "kind": "solid", "elform": 1,
+                   "material": {"rho": 7.9e-9, "E": 210000.0, "nu": 0.3}, "elements": elements}],
+        "fixed": [{"title": "Fixed", "nodes": [n for (i, _j, _k), n in nid.items() if i == 0],
+                   "dofs": (1, 1, 1, 1, 1, 1)}],
+        "node_forces": [{"title": "Force", "loads": {n: (0.0, 0.0, 100.0 / len(tip)) for n in tip}}],
+        "pressures": [{"title": "Pressure", "pressure": 0.01, "segments": top}],
+        "gravity": (0.0, 0.0, -9806.65),
+        "extra": "*KEYWORD\n*DATABASE_GLSTAT\n1.0e-4\n*END",
+    }
+    model.update(overrides)
+    return model, tip
+
+
+class DeckWriterTest(unittest.TestCase):
+    def test_keywords_and_cards(self):
+        model, _tip = block_model()
+        deck = deck_writer.write_deck(model)
+        lines = deck.splitlines()
+        self.assertEqual((lines[0], lines[-1]), ("*KEYWORD", "*END"))
+        self.assertEqual(deck.count("*KEYWORD"), 1)
+        self.assertEqual(deck.count("*END"), 1)
+        for keyword in ("*CONTROL_TERMINATION", "*DATABASE_BINARY_D3PLOT", "*DEFINE_CURVE", "*PART",
+                        "*SECTION_SOLID", "*MAT_ELASTIC", "*NODE", "*ELEMENT_SOLID", "*SET_NODE_LIST",
+                        "*BOUNDARY_SPC_SET", "*LOAD_NODE_POINT", "*LOAD_SEGMENT", "*LOAD_BODY_Z", "*DATABASE_GLSTAT"):
+            self.assertIn(keyword + "\n", deck)
+        self.assertIn("*MAT_ELASTIC\n1, 7.9e-09, 210000, 0.3\n", deck)
+        self.assertIn("*ELEMENT_SOLID\n1, 1\n1, 2, 7, 6, 11, 12, 17, 16\n", deck)  # two-card format
+        self.assertIn("*LOAD_BODY_Z\n1, 9806.65\n", deck)  # gravity in -z is a positive body load
+        self.assertNotIn("*CONTROL_TIMESTEP", deck)
+
+    def test_ramp_and_constant_curves(self):
+        ramp = deck_writer.write_deck(block_model()[0])
+        self.assertIn("0.0, 0.0\n0.002, 1.0", ramp)
+        constant = deck_writer.write_deck(block_model(load_curve="constant")[0])
+        self.assertIn("0.0, 1.0\n0.002, 1.0", constant)
+
+    def test_mass_scaling(self):
+        deck = deck_writer.write_deck(block_model(mass_scaling_dt=1e-6)[0])
+        self.assertIn("*CONTROL_TIMESTEP\n$  dtinit    tssfac      isdo    tslimt     dt2ms\n0.0, 0.9, 0, 0.0, -1e-06", deck)
+
+    def test_shells_and_triangles(self):
+        nodes = {1: (0, 0, 0), 2: (1, 0, 0), 3: (1, 1, 0), 4: (0, 1, 0)}
+        model = {"end_time": 0.001, "nodes": nodes, "parts": [
+            {"pid": 1, "kind": "shell", "elform": 2, "thickness": 2.0,
+             "material": {"rho": 1e-9, "E": 1000.0, "nu": 0.3}, "elements": [(1, [1, 2, 3]), (2, [1, 3, 4])]}],
+            "pressures": [{"pressure": 0.5, "segments": [[1, 2, 3]]}]}
+        deck = deck_writer.write_deck(model)
+        self.assertIn("*SECTION_SHELL\n1, 2\n2, 2, 2, 2\n", deck)
+        self.assertIn("*ELEMENT_SHELL\n1, 1, 1, 2, 3, 3\n2, 1, 1, 3, 4, 4\n", deck)
+        self.assertIn("*LOAD_SEGMENT\n1, 0.5, 0.0, 1, 2, 3, 3\n", deck)
+
+    def test_only_used_nodes_are_written(self):
+        model, _tip = block_model()
+        model["nodes"][999] = (5.0, 5.0, 5.0)  # e.g. a node of a face element
+        model["fixed"][0]["nodes"].append(999)
+        deck = deck_writer.write_deck(model)
+        self.assertNotIn("\n999, ", deck)
+
+
+@unittest.skipIf(radioss_runner.Installation().problems(), "OpenRadioss not installed in ~/OpenRadioss")
+class FemDeckIntegrationTest(unittest.TestCase):
+    """The deck writer output runs in OpenRadioss and bends the block the right way."""
+
+    def test_block_bends_like_a_beam(self):
+        import xml.etree.ElementTree as ET
+        # 2 elements through the thickness: a single hexahedron layer is too coarse for bending
+        model, tip = block_model(nx=8, ny=2, nz=2, size=5.0, extra="", gravity=None, pressures=[])
+        with tempfile.TemporaryDirectory() as tmp:
+            deck = os.path.join(tmp, "block.k")
+            with open(deck, "w") as f:
+                f.write(deck_writer.write_deck(model))
+            result = radioss_runner.run_job(deck, threads=1, log=lambda _line: None)
+            self.assertEqual(radioss_runner.listing_summary(result["starter_out"])[0], 0)
+            arrays = {a.get("Name"): a.text.split() for a in ET.parse(result["vtk_files"][-1]).getroot().iter("DataArray")
+                      if a.text}
+            ids = [int(v) for v in arrays["NODE_ID"]]
+            disp = [float(v) for v in arrays["Displacement"]]
+            tip_uz = [disp[3 * i + 2] for i, n in enumerate(ids) if n in set(tip)]
+            beam = 100.0 * 40.0 ** 3 / (3 * 210000.0 * 10.0 * 10.0 ** 3 / 12)  # F L^3 / 3EI = 0.0122 mm
+            self.assertAlmostEqual(sum(tip_uz) / len(tip_uz), beam, delta=0.05 * beam)
+
+
 class BasicKFileTest(unittest.TestCase):
     """The basic template uses fixed format, so column positions matter."""
 

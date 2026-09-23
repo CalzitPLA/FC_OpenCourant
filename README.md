@@ -28,6 +28,31 @@ Create and edit LS-DYNA format input decks (`.k` files, as read by OpenRadioss) 
      as `.vtu` plus a `.pvd` series for ParaView. Inside the FreeCAD Flatpak the two host libraries the
      solver needs (`libcrypt.so.1`, `libapr-1.so.0`) are copied to `<OpenRadioss>/extlib/flatpak_compat`.
 
+### OpenRadioss in the FEM workbench
+
+OpenRadioss is also available as a solver of FreeCAD's **FEM workbench** (*Solve* toolbar and menu:
+**Solver OpenRadioss**, next to CalculiX, Elmer, Mystran and Z88). Set up an analysis as usual
+(mesh, material, constraints), add the solver and run it with *Run solver calculations* or by
+double-clicking the solver. The result (last frame) appears as a post-processing pipeline in the
+analysis; all frames are in the working directory as `radioss.pvd` for ParaView.
+
+OpenRadioss is an **explicit dynamic** solver. Solver properties:
+
+| Property | Meaning |
+|---|---|
+| EndTime | simulated time (default 0.01 s); explicit time steps are tiny, so keep it short |
+| LoadCurve | *Ramp* (loads grow from 0 over EndTime, quasi-static) or *Constant* (impact-like) |
+| OutputFrames | number of result frames |
+| MassScalingTimeStep | 0 = off; otherwise mass is added so the time step stays at least this value (much faster) |
+| Threads | threads for starter and engine |
+| AdditionalKeywords | a text document whose keywords are appended to the deck (e.g. from the Keyword Editor) |
+
+Supported: volume meshes (tetra4, tetra10 native, hexa8, penta6, pyra5; second-order hexa/penta/pyra
+are reduced to corner nodes) and face meshes with a shell thickness; linear elastic materials (several
+via references); fixed and displacement (fixed components) constraints, force, pressure and self weight.
+Other constraints are reported and ignored. For bending with hexahedra use at least two elements
+through the thickness.
+
 The default templates live in `freecad/ORfemn/templates.json` and use consistent mm / t / s / N / MPa units.
 Templates edited in the Template Editor are saved per user to `<FreeCAD user data>/ORfemn/templates.json`
 (e.g. `~/.local/share/FreeCAD/ORfemn/`), which then replaces the defaults; *Reset to Defaults* removes it.
