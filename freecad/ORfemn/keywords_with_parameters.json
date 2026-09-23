@@ -8097,7 +8097,7 @@
     "id": 318,
     "name": "*MAT_001 (ELASTIC)",
     "category": "Material",
-    "description": "Defines an isotropic, linear elastic material using Hookeâs law.",
+    "description": "Defines an isotropic, linear elastic material using Hooke’s law.",
     "documentation": "https://help.altair.com/hwsolvers/rad/topics/solvers/rad/mat_001_elastic_lsdyna_r.htm",
     "parameters": [
       {
@@ -8132,7 +8132,7 @@
     "id": 325,
     "name": "*MAT_001_FLUID (ELASTIC_FLUID)",
     "category": "Material",
-    "description": "Defines an isotropic, linear elastic material using Hookeâs law.",
+    "description": "Defines an isotropic, linear elastic material using Hooke’s law.",
     "documentation": "https://help.altair.com/hwsolvers/rad/topics/solvers/rad/mat_001_fluid_elastic_fluid_lsdayna_r.htm",
     "parameters": [
       {

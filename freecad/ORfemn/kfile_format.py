@@ -36,7 +36,7 @@ $ Created by FreeCAD OpenRadioss Workbench
 $
 *CONTROL_TERMINATION
 $#  endtim    endcyc     dtmin    endeng    endmas
-       1.0
+     0.001
 *CONTROL_TIMESTEP
 $#  dtinit    tssfac      isdo    tslimt     dt2ms      lctm     erode     ms1st
        0.0       0.9
@@ -45,16 +45,16 @@ $#   npopt    neecho    nrefup    iaccop     opifs    ipnint    ikedit    iflush
          1         1         1         1
 *DATABASE_BINARY_D3PLOT
 $#      dt      lcdt      beam     npltc    psetid
-      0.01
+    1.0e-5
 *DATABASE_BINARY_D3THDT
 $#      dt      lcdt      beam     npltc    psetid
-      0.01
+    1.0e-5
 *DATABASE_GLSTAT
 $#      dt    binary      lcur     ioopt
-      0.01
+    1.0e-5
 *DATABASE_MATSUM
 $#      dt    binary      lcur     ioopt
-      0.01
+    1.0e-5
 *PART
 $# title
 Plate

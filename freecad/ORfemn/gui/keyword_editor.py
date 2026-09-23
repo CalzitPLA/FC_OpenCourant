@@ -626,7 +626,8 @@ class KeywordEditorDialog(QtWidgets.QDialog):
                                 "Please generate a keyword first before caching it.")
             return
 
-        keyword_name = self.current_keyword.get('name', 'Unknown') if self.current_keyword else 'Unknown'
+        # Name the entry after the keyword actually written (e.g. *PART_INERTIA)
+        keyword_name = keyword_text.splitlines()[0].strip()
         self.keyword_cache.append(self._make_cache_entry(keyword_name, keyword_text))
         self.update_cache_display()
         self.open_cache_viewer()

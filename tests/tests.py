@@ -20,6 +20,10 @@ _spec = importlib.util.spec_from_file_location("kfile_format", os.path.join(MODU
 kfile_format = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(kfile_format)
 
+_spec = importlib.util.spec_from_file_location("radioss_runner", os.path.join(MODULE_DIR, "radioss_runner.py"))
+radioss_runner = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(radioss_runner)
+
 
 def fixed_fields(line, widths):
     """Split a fixed-format card line into stripped fields."""
@@ -211,6 +215,130 @@ class BuildKFileTest(unittest.TestCase):
         self.assertEqual(lines.count("*KEYWORD"), 1)
         self.assertEqual(lines.count("*END"), 1)
         self.assertIn("*CONTROL_TERMINATION\n1.0", deck)
+
+
+LEGACY_VTK = """# vtk DataFile Version 3.0
+vtk output
+ASCII
+DATASET UNSTRUCTURED_GRID
+FIELD FieldData 2
+TIME 1 1 double
+0.5
+CYCLE 1 1 int
+10
+POINTS 4 float
+0 0 0
+1 0 0
+1 1 0
+0 1 0
+
+CELLS 1 5
+4 0 1 2 3
+
+CELL_TYPES 1
+9
+
+POINT_DATA 4
+SCALARS NODE_ID int 1
+LOOKUP_TABLE default
+1
+2
+3
+4
+
+VECTORS Velocity float
+0 0 0 0 0 0 0 0 0 0 0 0
+VECTORS Displacement float
+0 0 0 0.1 0 0 0.1 0 0 0 0 0
+CELL_DATA 1
+SCALARS ELEMENT_ID int 1
+LOOKUP_TABLE default
+7
+TENSORS Stress float
+100 0 0
+0 0 0
+0 0 0
+"""
+
+
+class RadiossRunnerTest(unittest.TestCase):
+    def test_result_files(self):
+        for name in ("job_0000.out", "job_0001.rad", "job_0000_0001.rst", "jobA001", "jobA012.vtu", "job.pvd", "jobT01"):
+            self.assertTrue(radioss_runner.is_result_file(name, "job"), name)
+        for name in ("job.k", "job_notes.txt", "jobAx", "other_0000.out"):
+            self.assertFalse(radioss_runner.is_result_file(name, "job"), name)
+
+    def test_listing_summary_and_messages(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            normal = os.path.join(tmp, "a.out")
+            with open(normal, "w") as f:
+                f.write("WARNING ID :   1084\n** WARNING IN MATERIAL LAW1\n\n"
+                        "     TERMINATION WITH WARNING\n              0 ERROR(S)\n              1 WARNING(S)\n")
+            self.assertEqual(radioss_runner.listing_summary(normal), (0, 1))
+            self.assertEqual(radioss_runner.listing_messages(normal, "WARNING"),
+                             ["WARNING ID :   1084 ** WARNING IN MATERIAL LAW1"])
+            early = os.path.join(tmp, "b.out")
+            with open(early, "w") as f:
+                f.write(" +=====+\n   NODES\n +=====+\n\nERROR ID :    760\n** ERROR TRAPPED\n\n RADIOSS STOP DUE TO INPUT ERROR\n")
+            self.assertEqual(radioss_runner.listing_summary(early), (1, None))
+            self.assertEqual(radioss_runner.listing_messages(early), ["ERROR ID :    760 ** ERROR TRAPPED [NODES]"])
+            self.assertEqual(radioss_runner.listing_summary(os.path.join(tmp, "missing.out")), (None, None))
+
+    def test_job_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for name in ("job_0000.rad", "job_0001.rad", "job_0002.rad", "jobA001", "jobA002", "jobA001.vtu", "x_0001.rad"):
+                open(os.path.join(tmp, name), "w").close()
+            self.assertEqual([os.path.basename(f) for f in radioss_runner.engine_inputs(tmp, "job")],
+                             ["job_0001.rad", "job_0002.rad"])
+            self.assertEqual([os.path.basename(f) for f in radioss_runner.animation_files(tmp, "job")],
+                             ["jobA001", "jobA002"])
+
+    def test_legacy_vtk_to_vtu_keeps_all_arrays(self):
+        import xml.etree.ElementTree as ET
+        with tempfile.TemporaryDirectory() as tmp:
+            legacy, vtu = os.path.join(tmp, "a.vtk"), os.path.join(tmp, "a.vtu")
+            with open(legacy, "w") as f:
+                f.write(LEGACY_VTK)
+            self.assertEqual(radioss_runner.legacy_vtk_to_vtu(legacy, vtu), 0.5)
+            root = ET.parse(vtu).getroot()
+            names = [a.get("Name") for a in root.iter("DataArray")]
+            for name in ("TIME", "NODE_ID", "Velocity", "Displacement", "ELEMENT_ID", "Stress", "Stress von Mises"):
+                self.assertIn(name, names)
+            arrays = {a.get("Name"): a for a in root.iter("DataArray")}
+            self.assertEqual(arrays["Displacement"].text.split()[3], "0.1")
+            self.assertEqual(arrays["Stress"].get("NumberOfComponents"), "9")
+            self.assertAlmostEqual(float(arrays["Stress von Mises"].text), 100.0)  # uniaxial stress
+            self.assertEqual(arrays["types"].text, "9")
+            self.assertEqual(arrays["offsets"].text, "4")
+
+    def test_von_mises_pure_shear(self):
+        self.assertAlmostEqual(radioss_runner._von_mises([0, 10, 0, 10, 0, 0, 0, 0, 0]), 10 * 3 ** 0.5)
+
+    def test_environment(self):
+        inst = radioss_runner.Installation("/opt/or")
+        env = inst.environment(threads=3, base={"LD_LIBRARY_PATH": "/x"})
+        self.assertEqual(env["RAD_CFG_PATH"], "/opt/or/hm_cfg_files")
+        self.assertEqual(env["OMP_NUM_THREADS"], "3")
+        self.assertTrue(env["LD_LIBRARY_PATH"].endswith(os.pathsep + "/x"))
+        self.assertEqual(inst.starter_command("/w/job.k", 2)[1:], ["-i", "job.k", "-nt", "2", "-np", "1"])
+        self.assertTrue(radioss_runner.Installation("/nonexistent").problems())
+
+
+@unittest.skipIf(radioss_runner.Installation().problems(), "OpenRadioss not installed in ~/OpenRadioss")
+class OpenRadiossIntegrationTest(unittest.TestCase):
+    """Runs the real solver on the basic template (about 1 s)."""
+
+    def test_basic_k_file_runs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            deck = os.path.join(tmp, "basic.k")
+            with open(deck, "w") as f:
+                f.write(kfile_format.BASIC_K_FILE)
+            result = radioss_runner.run_job(deck, threads=1, log=lambda _line: None)
+            self.assertEqual(radioss_runner.listing_summary(result["starter_out"])[0], 0)
+            self.assertTrue(all(radioss_runner.normal_termination(o) for o in result["engine_outs"]))
+            self.assertEqual(len(result["vtk_files"]), 100)
+            self.assertAlmostEqual(result["times"][-1], 0.001, delta=2e-5)
+            self.assertTrue(os.path.exists(os.path.join(tmp, "basic.pvd")))
 
 
 class BasicKFileTest(unittest.TestCase):

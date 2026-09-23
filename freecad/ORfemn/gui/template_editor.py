@@ -302,8 +302,9 @@ class TemplateEditorDialog(QtWidgets.QDialog):
         if not ok or not name.strip():
             return
         template_id = kfile_format.make_template_id(name, self.templates)
+        # "minimal" is shown in every Template Mode, so a new template is always visible in the menu
         self.templates[template_id] = {
-            "name": name.strip(), "level": "full", "description": "",
+            "name": name.strip(), "level": "minimal", "description": "",
             "keywords": [{"name": "*CONTROL_TERMINATION", "parameters": [
                 {"name": "ENDTIM", "value": "1.0", "description": "Termination time"}]}],
         }

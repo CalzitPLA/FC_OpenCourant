@@ -5,6 +5,8 @@ Create and edit LS-DYNA format input decks (`.k` files, as read by OpenRadioss) 
 ## Dependencies
 
 - FreeCAD >= 1.0 (Python 3, PySide provided by FreeCAD)
+- For running simulations: [OpenRadioss](https://github.com/OpenRadioss/OpenRadioss/releases)
+  (unpack the release, e.g. to `~/OpenRadioss`; the path can be changed in the run dialog)
 
 ## Quick Start
 
@@ -21,6 +23,10 @@ Create and edit LS-DYNA format input decks (`.k` files, as read by OpenRadioss) 
      *Templates* menu, with a live preview (also under *Templates → Edit Templates...* in the Keyword Editor)
    - **Open Cache Viewer** – inspect/remove cached keywords of the open editor
    - **Export LS-DYNA .k File** – save a text object to a `.k` file
+   - **Run OpenRadioss** – run starter, engine and the VTK conversion on a keyword text object in the
+     background (live log, Stop), then load the result into FEM post-processing. All frames are written
+     as `.vtu` plus a `.pvd` series for ParaView. Inside the FreeCAD Flatpak the two host libraries the
+     solver needs (`libcrypt.so.1`, `libapr-1.so.0`) are copied to `<OpenRadioss>/extlib/flatpak_compat`.
 
 The default templates live in `freecad/ORfemn/templates.json` and use consistent mm / t / s / N / MPa units.
 Templates edited in the Template Editor are saved per user to `<FreeCAD user data>/ORfemn/templates.json`

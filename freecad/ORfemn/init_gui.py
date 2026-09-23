@@ -29,6 +29,7 @@ class OpenRadiossWorkbench(Gui.Workbench):
         "TemplateEditor",
         "OpenCacheViewer",
         "ExportRadiossInput",
+        "RunOpenRadioss",
     ]
 
     def Initialize(self):
@@ -39,6 +40,7 @@ class OpenRadiossWorkbench(Gui.Workbench):
         from .commands.create_basic_k_file import CreateBasicKFile
         from .commands.open_cache_viewer import OpenCacheViewer
         from .commands.template_editor_command import TemplateEditorCommand
+        from .commands.run_solver_command import RunSolverCommand
 
         Gui.addCommand('KeywordEditor', KeywordEditorCommand())
         Gui.addCommand('CreateRadiossModel', CreateRadiossModel())
@@ -46,6 +48,7 @@ class OpenRadiossWorkbench(Gui.Workbench):
         Gui.addCommand('CreateBasicKFile', CreateBasicKFile())
         Gui.addCommand('OpenCacheViewer', OpenCacheViewer())
         Gui.addCommand('TemplateEditor', TemplateEditorCommand())
+        Gui.addCommand('RunOpenRadioss', RunSolverCommand())
 
         self.appendToolbar("OpenRadioss", self.COMMANDS)
         self.appendMenu("OpenRadioss", self.COMMANDS)
