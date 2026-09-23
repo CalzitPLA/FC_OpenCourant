@@ -30,7 +30,7 @@ class Proxy(solverbase.Proxy):
         self.add_properties(obj)
 
     def onDocumentRestored(self, obj):
-        self.add_properties(obj)  # documents saved by older versions get new properties
+        self.add_properties(obj)  # documents saved by older versions get new/converted properties
 
     @staticmethod
     def add_properties(obj):
@@ -53,9 +53,16 @@ class Proxy(solverbase.Proxy):
                             "Constant: loads act fully from the start (impact-like)")
             obj.LoadCurve = LOAD_CURVES
             obj.LoadCurve = LOAD_CURVES[0]
-        add("App::PropertyTime", "MassScalingTimeStep", "OpenRadioss",
-            "0 = off. Otherwise mass is added where needed so the time step stays at least this value "
-            "(faster runs, check the added mass in the listing)", "0 s")
+        old_mass_scaling = None
+        if hasattr(obj, "MassScalingTimeStep"):
+            # earlier versions stored a time quantity, which the property view rounds to "0,00 s"
+            old_mass_scaling = obj.MassScalingTimeStep.getValueAs("s").Value
+            obj.removeProperty("MassScalingTimeStep")
+        add("App::PropertyFloat", "MassScalingMicroseconds", "OpenRadioss",
+            "Mass scaling time step in microseconds (0 = off). Mass is added where needed so the time step "
+            "stays at least this value: much faster runs, check the added mass in the listing", 0.0)
+        if old_mass_scaling is not None:
+            obj.MassScalingMicroseconds = old_mass_scaling * 1e6
         add("App::PropertyIntegerConstraint", "Threads", "OpenRadioss", "Threads used by starter and engine",
             (min(4, os.cpu_count() or 1), 1, max(1, os.cpu_count() or 1), 1))
         add("App::PropertyLink", "AdditionalKeywords", "OpenRadioss",

@@ -20,6 +20,7 @@ set(Namespace_SRCS
         freecad/ORfemn/fem/commands.py
         freecad/ORfemn/fem/deck_writer.py
         freecad/ORfemn/fem/model.py
+        freecad/ORfemn/fem/results.py
         freecad/ORfemn/fem/solver.py
         freecad/ORfemn/fem/tasks.py
         freecad/ORfemn/gui/cache_viewer.py

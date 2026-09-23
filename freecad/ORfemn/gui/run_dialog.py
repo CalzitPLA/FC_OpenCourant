@@ -30,18 +30,14 @@ def default_workdir(doc, name):
 
 
 def load_vtk_result(doc, vtk_file, name="OpenRadiossResult", analysis=None):
-    """Load a VTK result file into a FEM post-processing pipeline and return it (None without FEM)."""
+    """Load a result frame as FEM result object + post-processing pipeline; returns the pipeline (None without FEM)."""
     try:
-        import Fem  # noqa: F401  (registers the Fem:: types)
+        from ..fem import results
     except ImportError:
         FreeCAD.Console.PrintWarning("FEM module not available; results not loaded\n")
         return None
-    pipeline = doc.addObject("Fem::FemPostPipeline", name)
-    pipeline.read(vtk_file)
-    pipeline.Label = f"{name} ({os.path.basename(vtk_file)})"
-    if analysis is not None:
-        analysis.addObject(pipeline)
-    doc.recompute()
+    result, pipeline = results.load_result(doc, vtk_file, name, analysis)
+    result.Label = f"{name} ({os.path.basename(vtk_file)})"
     return pipeline
 
 
@@ -324,7 +320,8 @@ class RunDialog(QtWidgets.QDialog):
         pipeline = load_vtk_result(doc, self.vtk_files[-1], f"{self.job_name}_result")
         if pipeline is not None:
             self.append(f"Loaded {os.path.basename(self.vtk_files[-1])} into '{pipeline.Label}'. "
-                        "Use the FEM workbench to colour it by Displacement or Stress.")
+                        "Colour it by Displacement or von Mises Stress in its properties or in the "
+                        "FEM workbench (double-click the result for the deformed shape).")
 
     def closeEvent(self, event):
         if self.process is not None:

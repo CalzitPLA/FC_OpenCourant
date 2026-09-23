@@ -144,7 +144,7 @@ class ModelBuilder:
             "pressures": self.pressures(table),
             "gravity": self.gravity(),
             "extra": self.solver.AdditionalKeywords.Text if self.solver.AdditionalKeywords else "",
-            "mass_scaling_dt": float(self.solver.MassScalingTimeStep.getValueAs("s")),
+            "mass_scaling_dt": max(0.0, float(self.solver.MassScalingMicroseconds)) * 1e-6,
         }
         model["output_interval"] = model["end_time"] / max(1, int(self.solver.OutputFrames))
         self.check_ignored_members()

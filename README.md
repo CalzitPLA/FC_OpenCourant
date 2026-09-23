@@ -33,8 +33,8 @@ Create and edit LS-DYNA format input decks (`.k` files, as read by OpenRadioss) 
 OpenRadioss is also available as a solver of FreeCAD's **FEM workbench** (*Solve* toolbar and menu:
 **Solver OpenRadioss**, next to CalculiX, Elmer, Mystran and Z88). Set up an analysis as usual
 (mesh, material, constraints), add the solver and run it with *Run solver calculations* or by
-double-clicking the solver. The result (last frame) appears as a post-processing pipeline in the
-analysis; all frames are in the working directory as `radioss.pvd` for ParaView.
+double-clicking the solver. The last frame appears as a FEM result (displacement, von Mises and
+principal stresses, like CalculiX results) plus a post-processing pipeline in the analysis; all frames are in the working directory as `radioss.pvd` for ParaView.
 
 OpenRadioss is an **explicit dynamic** solver. Solver properties:
 
@@ -43,7 +43,7 @@ OpenRadioss is an **explicit dynamic** solver. Solver properties:
 | EndTime | simulated time (default 0.01 s); explicit time steps are tiny, so keep it short |
 | LoadCurve | *Ramp* (loads grow from 0 over EndTime, quasi-static) or *Constant* (impact-like) |
 | OutputFrames | number of result frames |
-| MassScalingTimeStep | 0 = off; otherwise mass is added so the time step stays at least this value (much faster) |
+| MassScalingMicroseconds | 0 = off; otherwise mass is added so the time step stays at least this value in µs (much faster, e.g. 0.2) |
 | Threads | threads for starter and engine |
 | AdditionalKeywords | a text document whose keywords are appended to the deck (e.g. from the Keyword Editor) |
 

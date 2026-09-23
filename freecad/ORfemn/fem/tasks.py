@@ -6,10 +6,10 @@ import subprocess
 import FreeCAD
 
 from femsolver import run
-from femtools import femutils
+from femtools import membertools
 
 from .. import radioss_runner
-from . import deck_writer, model
+from . import deck_writer, model, results
 
 JOB_NAME = "radioss"
 RESULT_PREFIX = "OpenRadiossResult"
@@ -131,14 +131,16 @@ class Results(run.Results):
         doc = self.analysis.Document
         if not prefs.GetBool("KeepResultsOnReRun", False):
             for obj in list(self.analysis.Group):
-                if femutils.is_of_type(obj, "Fem::FemPostPipeline") and obj.Name.startswith(RESULT_PREFIX):
+                if obj.Name.startswith((RESULT_PREFIX, "Pipeline_" + RESULT_PREFIX)):
                     doc.removeObject(obj.Name)
         last = os.path.join(self.directory, frames[-1])
-        pipeline = doc.addObject("Fem::FemPostPipeline", RESULT_PREFIX)
-        pipeline.read(last)
+        mesh_obj = membertools.get_mesh_to_solve(self.analysis)[0]
         end_time = self.solver.EndTime.getValueAs("s").Value  # UserString rounds to 2 decimals
-        pipeline.Label = f"{RESULT_PREFIX} (t = {end_time:g} s)"
-        self.analysis.addObject(pipeline)
-        doc.recompute()
-        self.pushStatus(f"Loaded {frames[-1]} into '{pipeline.Label}'. "
+        result, pipeline = results.load_result(doc, last, RESULT_PREFIX, self.analysis,
+                                               femmesh=mesh_obj.FemMesh, time=end_time)
+        result.Label = f"{RESULT_PREFIX} (t = {end_time:g} s)"
+        pipeline.Label = f"Pipeline {RESULT_PREFIX} (t = {end_time:g} s)"
+        self.pushStatus(f"Loaded {frames[-1]} as '{result.Label}' (max. displacement "
+                        f"{max(result.DisplacementLengths or [0]):.4g} mm, max. von Mises "
+                        f"{max(result.vonMises or [0]):.4g} MPa). "
                         f"All {len(frames)} frames: {os.path.join(self.directory, JOB_NAME + '.pvd')}\n")
