@@ -32,7 +32,7 @@ Templates edited in the Template Editor are saved per user to `<FreeCAD user dat
 |---|---|
 | `freecad/ORfemn/` | The workbench package (the only part that gets installed) |
 | `tests/` | Unit tests for the FreeCAD-independent code |
-| `tools/keyword_db/` | Scripts that build `keywords_with_parameters.json` from the saved Radioss docs: `extract_cards.py` (card layouts, options, links; also runs `extract_field_info.py` for defaults and descriptions) |
+| `tools/keyword_db/` | Scripts that build `keywords_with_parameters.json`: `download_docs.py` (fetch the current Radioss LS-DYNA keyword docs into `data/docs/`), then `extract_cards.py` (card layouts, options, links; also runs `extract_field_info.py` for defaults and descriptions) |
 | `tools/examples/` | Scripts that download dynaexamples.com and extract `.k` files into `data/examples/` |
 | `tools/legacy/` | Old code kept for reference; not loaded by the workbench |
 | `data/` | Scraped documentation, keyword database archives and examples (`data/examples/` is not tracked by git) |

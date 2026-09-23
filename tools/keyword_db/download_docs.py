@@ -1,129 +1,136 @@
+#!/usr/bin/env python3
 """
-Download Radioss documentation pages for offline processing.
+Download the Radioss "LS-DYNA Input" keyword documentation for offline processing.
+
+The current keyword index is fetched from the Altair help site (falling back
+to the saved copy in data/Keyword documentation/), and every keyword page it
+links to is saved in data/docs/. data/docs/_metadata.json lists the pages
+(name, filename, url, description); extract_cards.py uses it to add new
+keywords to the keyword database.
+
+Usage:
+    python3 tools/keyword_db/download_docs.py [--output DIR] [--workers N] [--delay SECONDS]
+
+Requirements:
+    - requests, beautifulsoup4: pip install requests beautifulsoup4
 """
 
+import argparse
+import json
 import os
-import re
 import time
-import requests
-from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import requests
+from bs4 import BeautifulSoup
 
 ROOT = Path(__file__).resolve().parents[2]
+INDEX_URL = "https://help.altair.com/hwsolvers/rad/topics/solvers/rad/ls_dyna_keywords_r.htm"
+SAVED_INDEX = ROOT / 'data' / 'Keyword documentation' / 'LS-DYNA Input.html'
+DEFAULT_OUTPUT = ROOT / 'data' / 'docs'
+DESCRIPTION_PREFIX = "LS-DYNA Input Interface Keyword"
+
 
 class DocumentationDownloader:
-    def __init__(self, base_url=None, output_dir=None):
-        """Initialize the downloader with base URL and output directory."""
-        self.base_url = base_url or "https://help.altair.com"
-        self.output_dir = output_dir or str(ROOT / 'data' / 'docs')
+    def __init__(self, output_dir=DEFAULT_OUTPUT, workers=2, delay=0.5, retries=3):
+        self.output_dir = Path(output_dir)
+        self.workers = workers
+        self.delay = delay
+        self.retries = retries
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        })
-        
-        # Create output directory if it doesn't exist
-        os.makedirs(self.output_dir, exist_ok=True)
-    
-    def get_links_from_html(self, html_file):
-        """Extract all documentation links from the main HTML file."""
-        with open(html_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        soup = BeautifulSoup(content, 'html.parser')
-        links = []
-        
-        # Find all keyword links
-        for link in soup.find_all('a', class_='- topic/xref xref'):
-            if link.get('href') and link.get('title'):
-                keyword_name = link.get_text(strip=True)
-                if keyword_name.startswith('*'):
-                    url = link['href']
-                    full_url = urljoin(self.base_url, url) if not url.startswith('http') else url
-                    links.append({
-                        'name': keyword_name,
-                        'url': full_url,
-                        'description': link['title']
-                    })
-        
-        return links
-    
-    def download_page(self, link):
-        """Download a single documentation page."""
+        self.session.headers.update({'User-Agent': 'ORfe-FreeCAD-workbench documentation downloader'})
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def get(self, url):
+        """GET with retries; returns the response text."""
+        for attempt in range(1, self.retries + 1):
+            try:
+                response = self.session.get(url, timeout=30)
+                response.raise_for_status()
+                # The server sends no charset; requests would then assume ISO-8859-1
+                if 'charset' not in response.headers.get('content-type', '').lower():
+                    response.encoding = 'utf-8'
+                return response.text
+            except requests.RequestException:
+                if attempt == self.retries:
+                    raise
+                time.sleep(2 * attempt)
+
+    def load_index(self):
+        """Return (index html, base url): the online index, or the saved copy if offline."""
         try:
-            response = self.session.get(link['url'], timeout=10)
-            response.raise_for_status()
-            
-            # Create a safe filename from the URL
-            parsed_url = urlparse(link['url'])
-            filename = os.path.basename(parsed_url.path)
-            if not filename:
-                filename = f"{link['name'].replace('*', '').replace('/', '_')}.html"
-            
-            filepath = os.path.join(self.output_dir, filename)
-            
-            # Save the content
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(response.text)
-            
-            print(f"Downloaded: {link['name']} -> {filename}")
-            return {
-                'name': link['name'],
-                'filename': filename,
-                'url': link['url'],
-                'description': link['description']
-            }
-            
-        except Exception as e:
-            print(f"Error downloading {link['url']}: {e}")
-            return None
-    
-    def download_all(self, html_file, max_workers=5):
-        """Download all documentation pages."""
-        print(f"Extracting links from {html_file}...")
-        links = self.get_links_from_html(html_file)
-        print(f"Found {len(links)} documentation pages to download.")
-        
-        # Create a metadata file to store information about all pages
+            html = self.get(INDEX_URL)
+            (self.output_dir / '_index.htm').write_text(html, encoding='utf-8')
+            return html, INDEX_URL
+        except requests.RequestException as e:
+            print(f"Could not fetch {INDEX_URL} ({e}); using {SAVED_INDEX}")
+            return SAVED_INDEX.read_text(encoding='utf-8'), INDEX_URL
+
+    @staticmethod
+    def keyword_links(index_html, base_url):
+        """Return the keyword pages linked from the index.
+
+        Keyword links carry a "LS-DYNA Input Interface Keyword..." title; category
+        headings (*MAT, *SET, ...) link to overview pages and have no title.
+        """
+        soup = BeautifulSoup(index_html, 'html.parser')
+        links = {}
+        for a in soup.find_all('a', href=True):
+            name = a.get_text(strip=True)
+            if not name.startswith('*') or not (a.get('title') or '').startswith(DESCRIPTION_PREFIX):
+                continue
+            url = urljoin(base_url, a['href']).split('#')[0]
+            description = (a.get('title') or '').replace(DESCRIPTION_PREFIX, '', 1).strip()
+            links.setdefault(name, {'name': name, 'url': url, 'description': description})
+        return list(links.values())
+
+    def download_page(self, link):
+        filename = os.path.basename(urlparse(link['url']).path)
+        html = self.get(link['url'])
+        (self.output_dir / filename).write_text(html, encoding='utf-8')
+        time.sleep(self.delay)
+        return dict(link, filename=filename)
+
+    def download_all(self):
+        index_html, base_url = self.load_index()
+        links = self.keyword_links(index_html, base_url)
+        print(f"Found {len(links)} keyword pages; downloading to {self.output_dir} ...")
+
+        pages, failed = [], []
+        with ThreadPoolExecutor(max_workers=self.workers) as executor:
+            futures = {executor.submit(self.download_page, link): link for link in links}
+            for n, future in enumerate(as_completed(futures), 1):
+                link = futures[future]
+                try:
+                    pages.append(future.result())
+                except Exception as e:
+                    failed.append(link['name'])
+                    print(f"  failed: {link['name']}: {e}")
+                if n % 25 == 0:
+                    print(f"  {n}/{len(links)}")
+
+        pages.sort(key=lambda page: page['name'])
         metadata = {
-            'base_url': self.base_url,
+            'index_url': base_url,
             'downloaded_at': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'pages': []
+            'pages': pages,
         }
-        
-        # Download pages with thread pool for better performance
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_link = {
-                executor.submit(self.download_page, link): link 
-                for link in links
-            }
-            
-            for future in as_completed(future_to_link):
-                result = future.result()
-                if result:
-                    metadata['pages'].append(result)
-        
-        # Save metadata
-        metadata_file = os.path.join(self.output_dir, '_metadata.json')
-        with open(metadata_file, 'w', encoding='utf-8') as f:
-            json.dump(metadata, f, indent=2)
-        
-        print(f"\nDownload complete. Metadata saved to {metadata_file}")
+        (self.output_dir / '_metadata.json').write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + '\n',
+                                                         encoding='utf-8')
+        print(f"Downloaded {len(pages)} pages, {len(failed)} failed. Metadata: {self.output_dir / '_metadata.json'}")
         return metadata
 
 
 def main():
-    # Path to the main HTML file containing all the links
-    html_file = str(ROOT / 'data' / 'Keyword documentation' / 'LS-DYNA Input.html')
-    
-    # Initialize downloader
-    downloader = DocumentationDownloader()
-    
-    # Start downloading
-    downloader.download_all(html_file)
+    parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
+    parser.add_argument('--output', type=Path, default=DEFAULT_OUTPUT, help='Output directory')
+    parser.add_argument('--workers', type=int, default=2, help='Parallel downloads (be gentle)')
+    parser.add_argument('--delay', type=float, default=0.5, help='Pause after each page in seconds')
+    args = parser.parse_args()
+    DocumentationDownloader(args.output, args.workers, args.delay).download_all()
 
 
 if __name__ == "__main__":
-    import json
     main()

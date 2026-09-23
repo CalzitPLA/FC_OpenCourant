@@ -22,6 +22,9 @@ this is stored per card as ``condition``, the parsed ``options``,
 group is only written when filled in).
 
 The script also
+  - adds keywords listed in data/docs/_metadata.json (see download_docs.py)
+    that are missing from the database, and refreshes their descriptions,
+  - sets the category from the keyword name (all *MAT_* -> "Material"),
   - finds the keyword's own documentation page when the database only links
     to an overview page (e.g. all *MAT_* keywords), and makes the link absolute,
   - stores the keyword as written in a deck under ``keyword``
@@ -45,7 +48,8 @@ from bs4 import BeautifulSoup, NavigableString
 import extract_field_info
 
 ROOT = Path(__file__).resolve().parents[2]
-DOC_DIRS = [ROOT / 'data' / 'local_documentation', ROOT / 'data' / 'docs']
+# data/docs is written by download_docs.py and wins over the older local_documentation copy
+DOC_DIRS = [ROOT / 'data' / 'docs', ROOT / 'data' / 'local_documentation']
 DOC_BASE_URL = 'https://help.altair.com/hwsolvers/rad/topics/solvers/rad/'
 # Standard cards have 8 fields; element/node cards (8-character fields) up to 10
 FIELDS_PER_CARD = 10
@@ -59,7 +63,7 @@ PAGE_SUFFIXES = ('_lsdyna_r.htm', '_lsdayna_r.htm', '_ls_dyna_r.htm', '_r.htm', 
 
 
 def cell_text(cell):
-    return re.sub(r'\s+', ' ', cell.get_text(' ', strip=True)).strip()
+    return extract_field_info.clean_text(cell.get_text(' ', strip=True))
 
 
 def is_layout_table(rows):
@@ -137,8 +141,48 @@ def page_stem(filename):
     return filename
 
 
-def find_doc_page(keyword, pages):
+def category_for(name):
+    """Category shown in the keyword editor, from the first word of the keyword."""
+    first = re.split(r'[_ ]', name.lstrip('*'), maxsplit=1)[0].upper()
+    return {'MAT': 'Material', 'EOS': 'EOS'}.get(first, first.title())
+
+
+def load_metadata(doc_dirs):
+    """Pages listed by download_docs.py ({keyword name: page info}), from the first directory that has them."""
+    for doc_dir in doc_dirs:
+        path = doc_dir / '_metadata.json'
+        if path.exists():
+            pages = json.loads(path.read_text(encoding='utf-8')).get('pages', [])
+            return {page['name']: page for page in pages if page.get('filename')}
+    return {}
+
+
+def sync_keywords(keywords, metadata):
+    """Add keywords from the downloaded index that are missing; refresh descriptions. Returns added names."""
+    known = {kw['name'] for kw in keywords}
+    next_id = max((kw.get('id', 0) for kw in keywords), default=0) + 1
+    added = []
+    for name, page in metadata.items():
+        if name not in known:
+            keywords.append({'id': next_id, 'name': name, 'category': category_for(name),
+                             'description': page.get('description', ''), 'documentation': page['url'],
+                             'parameters': []})
+            next_id += 1
+            added.append(name)
+    for kw in keywords:
+        kw['category'] = category_for(kw['name'])
+        description = metadata.get(kw['name'], {}).get('description')
+        if description:
+            kw['description'] = description
+    keywords.sort(key=lambda kw: kw['name'])
+    return added
+
+
+def find_doc_page(keyword, pages, metadata=None):
     """Return the documentation page of ``keyword`` from ``pages`` ({filename: path})."""
+    listed = (metadata or {}).get(keyword['name'], {}).get('filename')
+    if listed in pages:
+        return pages[listed]
     if PAGE_OVERRIDES.get(keyword['name']) in pages:
         return pages[PAGE_OVERRIDES[keyword['name']]]
     linked = extract_field_info.doc_file_for(keyword, Path('.'))
@@ -203,9 +247,13 @@ def main():
     for doc_dir in reversed(args.docs):  # earlier directories win
         pages.update({p.name: p for p in doc_dir.glob('*.htm')})
     stats = {'no_page': [], 'no_cards': [], 'new': 0, 'changed': [], 'same': 0, 'relinked': 0}
+    metadata = load_metadata(args.docs)
+    added = sync_keywords(keywords, metadata)
+    if added:
+        print(f"Added {len(added)} keywords from the downloaded index: {', '.join(added)}")
 
     for keyword in keywords:
-        doc_file = find_doc_page(keyword, pages)
+        doc_file = find_doc_page(keyword, pages, metadata)
         if not doc_file:
             stats['no_page'].append(keyword['name'])
             continue

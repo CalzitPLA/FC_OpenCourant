@@ -27,7 +27,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DOCS = [ROOT / 'data' / 'local_documentation', ROOT / 'data' / 'docs']
+DEFAULT_DOCS = [ROOT / 'data' / 'docs', ROOT / 'data' / 'local_documentation']
 DEFAULT_DB = ROOT / 'freecad' / 'ORfemn' / 'keywords_with_parameters.json'
 
 FIELDS_PER_CARD = 10
@@ -35,6 +35,13 @@ NUMBER = r'[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?'
 DEFAULT_EQUALS = re.compile(r'default\s*=\s*(' + NUMBER + r')', re.IGNORECASE)
 DEFAULT_OPTION = re.compile(r'=\s*(' + NUMBER + r')(?:\s*or\s*' + NUMBER + r')*\s*\(default\)', re.IGNORECASE)
 MAX_HELP_LENGTH = 300
+# Formula images carry their MathType source as alt text, e.g. 'ν MathType@MTEF@5@5@+= ...@3A61@'
+MATHTYPE = re.compile(r'\s*MathType@MTEF@.*?@[0-9A-Fa-f]{4}@', re.DOTALL)
+
+
+def clean_text(text):
+    """Collapse whitespace and drop embedded MathType formula sources."""
+    return re.sub(r'\s+', ' ', MATHTYPE.sub('', text)).strip()
 
 
 def normalize(name):
@@ -71,8 +78,8 @@ def parse_field_table(html_path):
             cells = row.find_all(['td', 'th'])
             if len(cells) < 2:
                 continue
-            name = cells[0].get_text(' ', strip=True)
-            contents = re.sub(r'\s+', ' ', cells[1].get_text(' ', strip=True))
+            name = clean_text(cells[0].get_text(' ', strip=True))
+            contents = clean_text(cells[1].get_text(' ', strip=True))
             if name:
                 fields.setdefault(normalize(name), contents)
                 fields.setdefault(base_name(name), contents)
