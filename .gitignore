@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+.pixi/
+
+# LaTeX build output (keep .tex and .pdf)
+docs/*.aux
+docs/*.log
+docs/*.toc
+docs/*.out
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Scraped example data (re-downloadable via tools/examples/*.py)
+data/examples/
+data/.doc_cache/

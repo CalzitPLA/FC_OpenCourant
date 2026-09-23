@@ -1,0 +1,16 @@
+[project]
+authors = ["Nicholas Herrmann <nicholas.herrmann@proton.me>"]
+channels = ["freecad/label/dev", "conda-forge"]
+description = "makes it simpler"
+name = "freecad.ORfemn"
+platforms = ["osx-arm64", "linux-aarch64", "linux-64", "win-64", "osx-64"]
+version = "0.0.1"
+
+[pypi-dependencies]
+freecad_ORfemn = { path = ".", editable = true }
+
+[tasks]
+test = "python tests/tests.py"
+
+[dependencies]
+freecad = ">=1.0.0,<2"

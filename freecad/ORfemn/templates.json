@@ -1,0 +1,2758 @@
+{
+  "templates": {
+    "minimal": {
+      "name": "Minimal Template",
+      "level": "minimal",
+      "description": "Just the essential control cards",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "DTINIT",
+              "value": "0.0",
+              "description": "Initial time step (0 = determined by LS-DYNA)"
+            },
+            {
+              "name": "TSSFAC",
+              "value": "0.9",
+              "description": "Time step scale factor"
+            }
+          ]
+        }
+      ]
+    },
+    "simulation": {
+      "name": "Simulation Template",
+      "level": "minimal",
+      "description": "Control cards plus d3plot output",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "DTINIT",
+              "value": "0.0",
+              "description": "Initial time step (0 = determined by LS-DYNA)"
+            },
+            {
+              "name": "TSSFAC",
+              "value": "0.9",
+              "description": "Time step scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_BINARY_D3PLOT",
+          "parameters": [
+            {
+              "name": "DT",
+              "value": "0.01",
+              "description": "Output interval"
+            }
+          ]
+        }
+      ]
+    },
+    "basic": {
+      "name": "Basic Template",
+      "level": "basic",
+      "description": "Control cards, output and one shell part",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "DTINIT",
+              "value": "0.0",
+              "description": "Initial time step (0 = determined by LS-DYNA)"
+            },
+            {
+              "name": "TSSFAC",
+              "value": "0.9",
+              "description": "Time step scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_BINARY_D3PLOT",
+          "parameters": [
+            {
+              "name": "DT",
+              "value": "0.01",
+              "description": "Output interval"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SHELL",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "2",
+              "description": "Element formulation (2 = Belytschko-Tsay)"
+            },
+            {
+              "name": "SHRF",
+              "value": "0.833",
+              "description": "Shear factor"
+            },
+            {
+              "name": "NIP",
+              "value": "3",
+              "description": "Through-thickness integration points"
+            },
+            {
+              "name": "T1",
+              "value": "1.0",
+              "description": "Shell thickness at node 1",
+              "card": 1
+            },
+            {
+              "name": "T2",
+              "value": "1.0",
+              "description": "Shell thickness at node 2",
+              "card": 1
+            },
+            {
+              "name": "T3",
+              "value": "1.0",
+              "description": "Shell thickness at node 3",
+              "card": 1
+            },
+            {
+              "name": "T4",
+              "value": "1.0",
+              "description": "Shell thickness at node 4",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*MAT_ELASTIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            }
+          ]
+        }
+      ]
+    },
+    "structural": {
+      "name": "Structural Template",
+      "level": "basic",
+      "description": "Shell part with elastic material, constraint and point load",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SHELL",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "2",
+              "description": "Element formulation (2 = Belytschko-Tsay)"
+            },
+            {
+              "name": "SHRF",
+              "value": "0.833",
+              "description": "Shear factor"
+            },
+            {
+              "name": "NIP",
+              "value": "3",
+              "description": "Through-thickness integration points"
+            },
+            {
+              "name": "T1",
+              "value": "1.0",
+              "description": "Shell thickness at node 1",
+              "card": 1
+            },
+            {
+              "name": "T2",
+              "value": "1.0",
+              "description": "Shell thickness at node 2",
+              "card": 1
+            },
+            {
+              "name": "T3",
+              "value": "1.0",
+              "description": "Shell thickness at node 3",
+              "card": 1
+            },
+            {
+              "name": "T4",
+              "value": "1.0",
+              "description": "Shell thickness at node 4",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*MAT_ELASTIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            }
+          ]
+        },
+        {
+          "name": "*BOUNDARY_SPC_NODE",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "1",
+              "description": "Node ID"
+            },
+            {
+              "name": "CID",
+              "value": "0",
+              "description": "Coordinate system ID"
+            },
+            {
+              "name": "DOFX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFZ",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRZ",
+              "value": "1",
+              "description": "1 = constrained"
+            }
+          ]
+        },
+        {
+          "name": "*LOAD_NODE_POINT",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "2",
+              "description": "Node ID"
+            },
+            {
+              "name": "DOF",
+              "value": "2",
+              "description": "Direction (2 = y)"
+            },
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SF",
+              "value": "1.0",
+              "description": "Scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*DEFINE_CURVE",
+          "parameters": [
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SIDR",
+              "value": "0",
+              "description": "Stress initialization flag"
+            },
+            {
+              "name": "SFA",
+              "value": "1.0",
+              "description": "Abscissa scale factor"
+            },
+            {
+              "name": "SFO",
+              "value": "1.0",
+              "description": "Ordinate scale factor"
+            },
+            {
+              "name": "A1",
+              "value": "0.0",
+              "description": "Time",
+              "card": 1
+            },
+            {
+              "name": "O1",
+              "value": "0.0",
+              "description": "Value",
+              "card": 1
+            },
+            {
+              "name": "A2",
+              "value": "1.0",
+              "description": "Time",
+              "card": 2
+            },
+            {
+              "name": "O2",
+              "value": "1.0",
+              "description": "Value",
+              "card": 2
+            }
+          ]
+        }
+      ]
+    },
+    "transient_thermal": {
+      "name": "Transient Thermal",
+      "level": "full",
+      "description": "Transient thermal-only analysis of a solid part",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_SOLUTION",
+          "parameters": [
+            {
+              "name": "SOLN",
+              "value": "1",
+              "description": "1 = thermal only"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_THERMAL_SOLVER",
+          "parameters": [
+            {
+              "name": "ATYPE",
+              "value": "1",
+              "description": "1 = transient"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_THERMAL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "TS",
+              "value": "0",
+              "description": "0 = fixed time step"
+            },
+            {
+              "name": "TIP",
+              "value": "0.5",
+              "description": "Time integration parameter"
+            },
+            {
+              "name": "ITS",
+              "value": "0.001",
+              "description": "Initial thermal time step"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            },
+            {
+              "name": "EOSID",
+              "value": "",
+              "description": "",
+              "card": 1
+            },
+            {
+              "name": "HGID",
+              "value": "",
+              "description": "",
+              "card": 1
+            },
+            {
+              "name": "GRAV",
+              "value": "",
+              "description": "",
+              "card": 1
+            },
+            {
+              "name": "ADPOPT",
+              "value": "",
+              "description": "",
+              "card": 1
+            },
+            {
+              "name": "TMID",
+              "value": "2",
+              "description": "Thermal material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SOLID",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "1",
+              "description": "Element formulation"
+            }
+          ]
+        },
+        {
+          "name": "*MAT_ELASTIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            }
+          ]
+        },
+        {
+          "name": "*MAT_THERMAL_ISOTROPIC",
+          "parameters": [
+            {
+              "name": "TMID",
+              "value": "2",
+              "description": "Thermal material ID"
+            },
+            {
+              "name": "TRO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "HC",
+              "value": "4.6e8",
+              "description": "Heat capacity [mm^2/(s^2 K)]",
+              "card": 1
+            },
+            {
+              "name": "TC",
+              "value": "50.0",
+              "description": "Thermal conductivity [N/(s K)]",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*BOUNDARY_TEMPERATURE_NODE",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "1",
+              "description": "Node ID"
+            },
+            {
+              "name": "LCID",
+              "value": "0",
+              "description": "Load curve ID (0 = constant)"
+            },
+            {
+              "name": "CMULT",
+              "value": "293.0",
+              "description": "Temperature"
+            }
+          ]
+        }
+      ]
+    },
+    "linear_static": {
+      "name": "Linear Static Analysis",
+      "level": "basic",
+      "description": "Implicit linear static analysis",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_IMPLICIT_GENERAL",
+          "parameters": [
+            {
+              "name": "IMFLAG",
+              "value": "1",
+              "description": "1 = implicit"
+            },
+            {
+              "name": "DT0",
+              "value": "1.0",
+              "description": "Initial time step"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_IMPLICIT_SOLUTION",
+          "parameters": [
+            {
+              "name": "NSOLVR",
+              "value": "1",
+              "description": "1 = linear"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SHELL",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "2",
+              "description": "Element formulation (2 = Belytschko-Tsay)"
+            },
+            {
+              "name": "SHRF",
+              "value": "0.833",
+              "description": "Shear factor"
+            },
+            {
+              "name": "NIP",
+              "value": "3",
+              "description": "Through-thickness integration points"
+            },
+            {
+              "name": "T1",
+              "value": "1.0",
+              "description": "Shell thickness at node 1",
+              "card": 1
+            },
+            {
+              "name": "T2",
+              "value": "1.0",
+              "description": "Shell thickness at node 2",
+              "card": 1
+            },
+            {
+              "name": "T3",
+              "value": "1.0",
+              "description": "Shell thickness at node 3",
+              "card": 1
+            },
+            {
+              "name": "T4",
+              "value": "1.0",
+              "description": "Shell thickness at node 4",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*MAT_ELASTIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            }
+          ]
+        },
+        {
+          "name": "*BOUNDARY_SPC_NODE",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "1",
+              "description": "Node ID"
+            },
+            {
+              "name": "CID",
+              "value": "0",
+              "description": "Coordinate system ID"
+            },
+            {
+              "name": "DOFX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFZ",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRZ",
+              "value": "1",
+              "description": "1 = constrained"
+            }
+          ]
+        },
+        {
+          "name": "*LOAD_NODE_POINT",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "2",
+              "description": "Node ID"
+            },
+            {
+              "name": "DOF",
+              "value": "2",
+              "description": "Direction (2 = y)"
+            },
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SF",
+              "value": "1.0",
+              "description": "Scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*DEFINE_CURVE",
+          "parameters": [
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SIDR",
+              "value": "0",
+              "description": "Stress initialization flag"
+            },
+            {
+              "name": "SFA",
+              "value": "1.0",
+              "description": "Abscissa scale factor"
+            },
+            {
+              "name": "SFO",
+              "value": "1.0",
+              "description": "Ordinate scale factor"
+            },
+            {
+              "name": "A1",
+              "value": "0.0",
+              "description": "Time",
+              "card": 1
+            },
+            {
+              "name": "O1",
+              "value": "0.0",
+              "description": "Value",
+              "card": 1
+            },
+            {
+              "name": "A2",
+              "value": "1.0",
+              "description": "Time",
+              "card": 2
+            },
+            {
+              "name": "O2",
+              "value": "1.0",
+              "description": "Value",
+              "card": 2
+            }
+          ]
+        }
+      ]
+    },
+    "modal": {
+      "name": "Modal Analysis",
+      "level": "basic",
+      "description": "Implicit eigenvalue analysis",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_IMPLICIT_GENERAL",
+          "parameters": [
+            {
+              "name": "IMFLAG",
+              "value": "1",
+              "description": "1 = implicit"
+            },
+            {
+              "name": "DT0",
+              "value": "1.0",
+              "description": "Initial time step"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_IMPLICIT_EIGENVALUE",
+          "parameters": [
+            {
+              "name": "NEIG",
+              "value": "10",
+              "description": "Number of eigenvalues"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SHELL",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "2",
+              "description": "Element formulation (2 = Belytschko-Tsay)"
+            },
+            {
+              "name": "SHRF",
+              "value": "0.833",
+              "description": "Shear factor"
+            },
+            {
+              "name": "NIP",
+              "value": "3",
+              "description": "Through-thickness integration points"
+            },
+            {
+              "name": "T1",
+              "value": "1.0",
+              "description": "Shell thickness at node 1",
+              "card": 1
+            },
+            {
+              "name": "T2",
+              "value": "1.0",
+              "description": "Shell thickness at node 2",
+              "card": 1
+            },
+            {
+              "name": "T3",
+              "value": "1.0",
+              "description": "Shell thickness at node 3",
+              "card": 1
+            },
+            {
+              "name": "T4",
+              "value": "1.0",
+              "description": "Shell thickness at node 4",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*MAT_ELASTIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            }
+          ]
+        },
+        {
+          "name": "*BOUNDARY_SPC_NODE",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "1",
+              "description": "Node ID"
+            },
+            {
+              "name": "CID",
+              "value": "0",
+              "description": "Coordinate system ID"
+            },
+            {
+              "name": "DOFX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFZ",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRZ",
+              "value": "1",
+              "description": "1 = constrained"
+            }
+          ]
+        }
+      ]
+    },
+    "steady_thermal": {
+      "name": "Steady-State Thermal",
+      "level": "full",
+      "description": "Steady-state thermal-only analysis of a solid part",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_SOLUTION",
+          "parameters": [
+            {
+              "name": "SOLN",
+              "value": "1",
+              "description": "1 = thermal only"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_THERMAL_SOLVER",
+          "parameters": [
+            {
+              "name": "ATYPE",
+              "value": "0",
+              "description": "0 = steady state"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            },
+            {
+              "name": "EOSID",
+              "value": "",
+              "description": "",
+              "card": 1
+            },
+            {
+              "name": "HGID",
+              "value": "",
+              "description": "",
+              "card": 1
+            },
+            {
+              "name": "GRAV",
+              "value": "",
+              "description": "",
+              "card": 1
+            },
+            {
+              "name": "ADPOPT",
+              "value": "",
+              "description": "",
+              "card": 1
+            },
+            {
+              "name": "TMID",
+              "value": "2",
+              "description": "Thermal material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SOLID",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "1",
+              "description": "Element formulation"
+            }
+          ]
+        },
+        {
+          "name": "*MAT_ELASTIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            }
+          ]
+        },
+        {
+          "name": "*MAT_THERMAL_ISOTROPIC",
+          "parameters": [
+            {
+              "name": "TMID",
+              "value": "2",
+              "description": "Thermal material ID"
+            },
+            {
+              "name": "TRO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "HC",
+              "value": "4.6e8",
+              "description": "Heat capacity [mm^2/(s^2 K)]",
+              "card": 1
+            },
+            {
+              "name": "TC",
+              "value": "50.0",
+              "description": "Thermal conductivity [N/(s K)]",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*BOUNDARY_TEMPERATURE_NODE",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "1",
+              "description": "Node ID"
+            },
+            {
+              "name": "LCID",
+              "value": "0",
+              "description": "Load curve ID (0 = constant)"
+            },
+            {
+              "name": "CMULT",
+              "value": "293.0",
+              "description": "Temperature"
+            }
+          ]
+        }
+      ]
+    },
+    "basic_contact": {
+      "name": "Basic Contact",
+      "level": "full",
+      "description": "Two shell parts with surface-to-surface contact",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_CONTACT",
+          "parameters": [
+            {
+              "name": "SLSFAC",
+              "value": "0.1",
+              "description": "Penalty scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 2",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "2",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "2",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SHELL",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "2",
+              "description": "Element formulation (2 = Belytschko-Tsay)"
+            },
+            {
+              "name": "SHRF",
+              "value": "0.833",
+              "description": "Shear factor"
+            },
+            {
+              "name": "NIP",
+              "value": "3",
+              "description": "Through-thickness integration points"
+            },
+            {
+              "name": "T1",
+              "value": "1.0",
+              "description": "Shell thickness at node 1",
+              "card": 1
+            },
+            {
+              "name": "T2",
+              "value": "1.0",
+              "description": "Shell thickness at node 2",
+              "card": 1
+            },
+            {
+              "name": "T3",
+              "value": "1.0",
+              "description": "Shell thickness at node 3",
+              "card": 1
+            },
+            {
+              "name": "T4",
+              "value": "1.0",
+              "description": "Shell thickness at node 4",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SHELL",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "2",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "2",
+              "description": "Element formulation (2 = Belytschko-Tsay)"
+            },
+            {
+              "name": "SHRF",
+              "value": "0.833",
+              "description": "Shear factor"
+            },
+            {
+              "name": "NIP",
+              "value": "3",
+              "description": "Through-thickness integration points"
+            },
+            {
+              "name": "T1",
+              "value": "1.0",
+              "description": "Shell thickness at node 1",
+              "card": 1
+            },
+            {
+              "name": "T2",
+              "value": "1.0",
+              "description": "Shell thickness at node 2",
+              "card": 1
+            },
+            {
+              "name": "T3",
+              "value": "1.0",
+              "description": "Shell thickness at node 3",
+              "card": 1
+            },
+            {
+              "name": "T4",
+              "value": "1.0",
+              "description": "Shell thickness at node 4",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*MAT_ELASTIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            }
+          ]
+        },
+        {
+          "name": "*CONTACT_AUTOMATIC_SURFACE_TO_SURFACE",
+          "parameters": [
+            {
+              "name": "SSID",
+              "value": "1",
+              "description": "Slave part ID"
+            },
+            {
+              "name": "MSID",
+              "value": "2",
+              "description": "Master part ID"
+            },
+            {
+              "name": "SSTYP",
+              "value": "3",
+              "description": "3 = part ID"
+            },
+            {
+              "name": "MSTYP",
+              "value": "3",
+              "description": "3 = part ID"
+            },
+            {
+              "name": "FS",
+              "value": "0.2",
+              "description": "Static friction coefficient",
+              "card": 1
+            },
+            {
+              "name": "FD",
+              "value": "0.1",
+              "description": "Dynamic friction coefficient",
+              "card": 1
+            },
+            {
+              "name": "SFS",
+              "value": "1.0",
+              "description": "Slave penalty stiffness scale factor",
+              "card": 2
+            }
+          ]
+        },
+        {
+          "name": "*BOUNDARY_SPC_NODE",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "1",
+              "description": "Node ID"
+            },
+            {
+              "name": "CID",
+              "value": "0",
+              "description": "Coordinate system ID"
+            },
+            {
+              "name": "DOFX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFZ",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRZ",
+              "value": "1",
+              "description": "1 = constrained"
+            }
+          ]
+        },
+        {
+          "name": "*LOAD_NODE_POINT",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "2",
+              "description": "Node ID"
+            },
+            {
+              "name": "DOF",
+              "value": "2",
+              "description": "Direction (2 = y)"
+            },
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SF",
+              "value": "1.0",
+              "description": "Scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*DEFINE_CURVE",
+          "parameters": [
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SIDR",
+              "value": "0",
+              "description": "Stress initialization flag"
+            },
+            {
+              "name": "SFA",
+              "value": "1.0",
+              "description": "Abscissa scale factor"
+            },
+            {
+              "name": "SFO",
+              "value": "1.0",
+              "description": "Ordinate scale factor"
+            },
+            {
+              "name": "A1",
+              "value": "0.0",
+              "description": "Time",
+              "card": 1
+            },
+            {
+              "name": "O1",
+              "value": "0.0",
+              "description": "Value",
+              "card": 1
+            },
+            {
+              "name": "A2",
+              "value": "1.0",
+              "description": "Time",
+              "card": 2
+            },
+            {
+              "name": "O2",
+              "value": "1.0",
+              "description": "Value",
+              "card": 2
+            }
+          ]
+        }
+      ]
+    },
+    "implicit": {
+      "name": "Implicit Analysis",
+      "level": "full",
+      "description": "Implicit nonlinear analysis with plastic material",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_IMPLICIT_GENERAL",
+          "parameters": [
+            {
+              "name": "IMFLAG",
+              "value": "1",
+              "description": "1 = implicit"
+            },
+            {
+              "name": "DT0",
+              "value": "0.1",
+              "description": "Initial time step"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_IMPLICIT_SOLUTION",
+          "parameters": [
+            {
+              "name": "NSOLVR",
+              "value": "12",
+              "description": "12 = nonlinear, full Newton (default)"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SHELL",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "2",
+              "description": "Element formulation (2 = Belytschko-Tsay)"
+            },
+            {
+              "name": "SHRF",
+              "value": "0.833",
+              "description": "Shear factor"
+            },
+            {
+              "name": "NIP",
+              "value": "3",
+              "description": "Through-thickness integration points"
+            },
+            {
+              "name": "T1",
+              "value": "1.0",
+              "description": "Shell thickness at node 1",
+              "card": 1
+            },
+            {
+              "name": "T2",
+              "value": "1.0",
+              "description": "Shell thickness at node 2",
+              "card": 1
+            },
+            {
+              "name": "T3",
+              "value": "1.0",
+              "description": "Shell thickness at node 3",
+              "card": 1
+            },
+            {
+              "name": "T4",
+              "value": "1.0",
+              "description": "Shell thickness at node 4",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*MAT_PLASTIC_KINEMATIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            },
+            {
+              "name": "SIGY",
+              "value": "250.0",
+              "description": "Yield stress [MPa]"
+            },
+            {
+              "name": "ETAN",
+              "value": "1000.0",
+              "description": "Tangent modulus [MPa]"
+            }
+          ]
+        },
+        {
+          "name": "*BOUNDARY_SPC_NODE",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "1",
+              "description": "Node ID"
+            },
+            {
+              "name": "CID",
+              "value": "0",
+              "description": "Coordinate system ID"
+            },
+            {
+              "name": "DOFX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFZ",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRZ",
+              "value": "1",
+              "description": "1 = constrained"
+            }
+          ]
+        },
+        {
+          "name": "*LOAD_NODE_POINT",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "2",
+              "description": "Node ID"
+            },
+            {
+              "name": "DOF",
+              "value": "2",
+              "description": "Direction (2 = y)"
+            },
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SF",
+              "value": "1.0",
+              "description": "Scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*DEFINE_CURVE",
+          "parameters": [
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SIDR",
+              "value": "0",
+              "description": "Stress initialization flag"
+            },
+            {
+              "name": "SFA",
+              "value": "1.0",
+              "description": "Abscissa scale factor"
+            },
+            {
+              "name": "SFO",
+              "value": "1.0",
+              "description": "Ordinate scale factor"
+            },
+            {
+              "name": "A1",
+              "value": "0.0",
+              "description": "Time",
+              "card": 1
+            },
+            {
+              "name": "O1",
+              "value": "0.0",
+              "description": "Value",
+              "card": 1
+            },
+            {
+              "name": "A2",
+              "value": "1.0",
+              "description": "Time",
+              "card": 2
+            },
+            {
+              "name": "O2",
+              "value": "1.0",
+              "description": "Value",
+              "card": 2
+            }
+          ]
+        }
+      ]
+    },
+    "explicit": {
+      "name": "Explicit Analysis",
+      "level": "full",
+      "description": "Explicit dynamic analysis with plastic material",
+      "keywords": [
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "0.1",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "DTINIT",
+              "value": "0.0",
+              "description": "Initial time step (0 = determined by LS-DYNA)"
+            },
+            {
+              "name": "TSSFAC",
+              "value": "0.9",
+              "description": "Time step scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_HOURGLASS",
+          "parameters": [
+            {
+              "name": "IHQ",
+              "value": "4",
+              "description": "Hourglass control type"
+            },
+            {
+              "name": "QH",
+              "value": "0.1",
+              "description": "Hourglass coefficient"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_CONTACT",
+          "parameters": [
+            {
+              "name": "SLSFAC",
+              "value": "0.1",
+              "description": "Penalty scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_ENERGY",
+          "parameters": [
+            {
+              "name": "HGEN",
+              "value": "2",
+              "description": "2 = compute hourglass energy"
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_BINARY_D3PLOT",
+          "parameters": [
+            {
+              "name": "DT",
+              "value": "0.01",
+              "description": "Output interval"
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_HISTORY_NODE",
+          "parameters": [
+            {
+              "name": "ID1",
+              "value": "1",
+              "description": "Node ID"
+            }
+          ]
+        },
+        {
+          "name": "*PART",
+          "parameters": [
+            {
+              "name": "HEADING",
+              "value": "Part 1",
+              "description": "Part title"
+            },
+            {
+              "name": "PID",
+              "value": "1",
+              "description": "Part ID",
+              "card": 1
+            },
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID",
+              "card": 1
+            },
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*SECTION_SHELL",
+          "parameters": [
+            {
+              "name": "SECID",
+              "value": "1",
+              "description": "Section ID"
+            },
+            {
+              "name": "ELFORM",
+              "value": "2",
+              "description": "Element formulation (2 = Belytschko-Tsay)"
+            },
+            {
+              "name": "SHRF",
+              "value": "0.833",
+              "description": "Shear factor"
+            },
+            {
+              "name": "NIP",
+              "value": "3",
+              "description": "Through-thickness integration points"
+            },
+            {
+              "name": "T1",
+              "value": "1.0",
+              "description": "Shell thickness at node 1",
+              "card": 1
+            },
+            {
+              "name": "T2",
+              "value": "1.0",
+              "description": "Shell thickness at node 2",
+              "card": 1
+            },
+            {
+              "name": "T3",
+              "value": "1.0",
+              "description": "Shell thickness at node 3",
+              "card": 1
+            },
+            {
+              "name": "T4",
+              "value": "1.0",
+              "description": "Shell thickness at node 4",
+              "card": 1
+            }
+          ]
+        },
+        {
+          "name": "*MAT_PLASTIC_KINEMATIC",
+          "parameters": [
+            {
+              "name": "MID",
+              "value": "1",
+              "description": "Material ID"
+            },
+            {
+              "name": "RO",
+              "value": "7.85e-9",
+              "description": "Density [t/mm^3]"
+            },
+            {
+              "name": "E",
+              "value": "210000.0",
+              "description": "Young's modulus [MPa]"
+            },
+            {
+              "name": "PR",
+              "value": "0.3",
+              "description": "Poisson's ratio"
+            },
+            {
+              "name": "SIGY",
+              "value": "250.0",
+              "description": "Yield stress [MPa]"
+            },
+            {
+              "name": "ETAN",
+              "value": "1000.0",
+              "description": "Tangent modulus [MPa]"
+            }
+          ]
+        },
+        {
+          "name": "*BOUNDARY_SPC_NODE",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "1",
+              "description": "Node ID"
+            },
+            {
+              "name": "CID",
+              "value": "0",
+              "description": "Coordinate system ID"
+            },
+            {
+              "name": "DOFX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFZ",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRX",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRY",
+              "value": "1",
+              "description": "1 = constrained"
+            },
+            {
+              "name": "DOFRZ",
+              "value": "1",
+              "description": "1 = constrained"
+            }
+          ]
+        },
+        {
+          "name": "*LOAD_NODE_POINT",
+          "parameters": [
+            {
+              "name": "NID",
+              "value": "2",
+              "description": "Node ID"
+            },
+            {
+              "name": "DOF",
+              "value": "2",
+              "description": "Direction (2 = y)"
+            },
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SF",
+              "value": "1.0",
+              "description": "Scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*DEFINE_CURVE",
+          "parameters": [
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SIDR",
+              "value": "0",
+              "description": "Stress initialization flag"
+            },
+            {
+              "name": "SFA",
+              "value": "1.0",
+              "description": "Abscissa scale factor"
+            },
+            {
+              "name": "SFO",
+              "value": "1.0",
+              "description": "Ordinate scale factor"
+            },
+            {
+              "name": "A1",
+              "value": "0.0",
+              "description": "Time",
+              "card": 1
+            },
+            {
+              "name": "O1",
+              "value": "0.0",
+              "description": "Value",
+              "card": 1
+            },
+            {
+              "name": "A2",
+              "value": "1.0",
+              "description": "Time",
+              "card": 2
+            },
+            {
+              "name": "O2",
+              "value": "1.0",
+              "description": "Value",
+              "card": 2
+            }
+          ]
+        }
+      ]
+    },
+    "implicit_linear_elasticity": {
+      "name": "Implicit Linear Elasticity Analysis",
+      "level": "full",
+      "description": "Template for implicit linear elasticity problems using static analysis",
+      "keywords": [
+        {
+          "name": "*CONTROL_IMPLICIT_GENERAL",
+          "parameters": [
+            {
+              "name": "IMFLAG",
+              "value": "1",
+              "description": "1 = implicit"
+            },
+            {
+              "name": "DT0",
+              "value": "0.01",
+              "description": "Initial time step"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_IMPLICIT_SOLUTION",
+          "parameters": [
+            {
+              "name": "NSOLVR",
+              "value": "1",
+              "description": "1 = linear"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "1.0",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_BINARY_D3PLOT",
+          "parameters": [
+            {
+              "name": "DT",
+              "value": "0.1",
+              "description": "Output interval"
+            }
+          ]
+        }
+      ]
+    },
+    "explicit_nonlinear_elasticity": {
+      "name": "Explicit Nonlinear Elasticity Analysis",
+      "level": "full",
+      "description": "Template for explicit nonlinear elasticity problems with dynamic loading",
+      "keywords": [
+        {
+          "name": "*CONTROL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "DTINIT",
+              "value": "0.001",
+              "description": "Initial time step (0 = determined by LS-DYNA)"
+            },
+            {
+              "name": "TSSFAC",
+              "value": "0.9",
+              "description": "Time step scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "0.1",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_ENERGY",
+          "parameters": [
+            {
+              "name": "HGEN",
+              "value": "2",
+              "description": "2 = compute hourglass energy"
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_BINARY_D3PLOT",
+          "parameters": [
+            {
+              "name": "DT",
+              "value": "0.001",
+              "description": "Output interval"
+            }
+          ]
+        }
+      ]
+    },
+    "structural_impact": {
+      "name": "Structural Impact Analysis",
+      "level": "full",
+      "description": "Template for structural impact problems with contact",
+      "keywords": [
+        {
+          "name": "*CONTROL_CONTACT",
+          "parameters": [
+            {
+              "name": "SLSFAC",
+              "value": "0.1",
+              "description": "Penalty scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_HOURGLASS",
+          "parameters": [
+            {
+              "name": "IHQ",
+              "value": "4",
+              "description": "Hourglass control type"
+            },
+            {
+              "name": "QH",
+              "value": "0.1",
+              "description": "Hourglass coefficient"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "DTINIT",
+              "value": "0.0001",
+              "description": "Initial time step (0 = determined by LS-DYNA)"
+            },
+            {
+              "name": "TSSFAC",
+              "value": "0.9",
+              "description": "Time step scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*CONTACT_AUTOMATIC_SINGLE_SURFACE",
+          "parameters": [
+            {
+              "name": "SSID",
+              "value": "0",
+              "description": "Surface ID (ignored for SSTYP 5)"
+            },
+            {
+              "name": "MSID",
+              "value": "0",
+              "description": ""
+            },
+            {
+              "name": "SSTYP",
+              "value": "5",
+              "description": "5 = all parts"
+            },
+            {
+              "name": "FS",
+              "value": "0.1",
+              "description": "Static friction coefficient",
+              "card": 1
+            },
+            {
+              "name": "FD",
+              "value": "0.05",
+              "description": "Dynamic friction coefficient",
+              "card": 1
+            },
+            {
+              "name": "SFS",
+              "value": "1.0",
+              "description": "Slave penalty stiffness scale factor",
+              "card": 2
+            }
+          ]
+        }
+      ]
+    },
+    "modal_analysis": {
+      "name": "Modal Analysis (control only)",
+      "level": "full",
+      "description": "Template for eigenvalue modal analysis",
+      "keywords": [
+        {
+          "name": "*CONTROL_IMPLICIT_EIGENVALUE",
+          "parameters": [
+            {
+              "name": "NEIG",
+              "value": "10",
+              "description": "Number of eigenvalues"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_IMPLICIT_GENERAL",
+          "parameters": [
+            {
+              "name": "IMFLAG",
+              "value": "1",
+              "description": "1 = implicit"
+            },
+            {
+              "name": "DT0",
+              "value": "1.0",
+              "description": "Initial time step"
+            }
+          ]
+        }
+      ]
+    },
+    "thermal_stress": {
+      "name": "Thermal Stress Analysis",
+      "level": "full",
+      "description": "Template for thermal stress problems with temperature loading",
+      "keywords": [
+        {
+          "name": "*CONTROL_SOLUTION",
+          "parameters": [
+            {
+              "name": "SOLN",
+              "value": "0",
+              "description": "0 = structural only"
+            }
+          ]
+        },
+        {
+          "name": "*LOAD_THERMAL_LOAD_CURVE",
+          "parameters": [
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Temperature vs. time curve"
+            }
+          ]
+        },
+        {
+          "name": "*DEFINE_CURVE",
+          "parameters": [
+            {
+              "name": "LCID",
+              "value": "1",
+              "description": "Load curve ID"
+            },
+            {
+              "name": "SIDR",
+              "value": "0",
+              "description": "Stress initialization flag"
+            },
+            {
+              "name": "SFA",
+              "value": "1.0",
+              "description": "Abscissa scale factor"
+            },
+            {
+              "name": "SFO",
+              "value": "1.0",
+              "description": "Ordinate scale factor"
+            },
+            {
+              "name": "A1",
+              "value": "0.0",
+              "description": "Time",
+              "card": 1
+            },
+            {
+              "name": "O1",
+              "value": "0.0",
+              "description": "Value",
+              "card": 1
+            },
+            {
+              "name": "A2",
+              "value": "1.0",
+              "description": "Time",
+              "card": 2
+            },
+            {
+              "name": "O2",
+              "value": "100.0",
+              "description": "Value",
+              "card": 2
+            }
+          ]
+        }
+      ]
+    },
+    "ls_dyna_showcase_basic": {
+      "name": "LS-DYNA Showcase: Basic Crash Box",
+      "level": "full",
+      "description": "Basic crash box example demonstrating explicit dynamics and contact",
+      "keywords": [
+        {
+          "name": "*CONTROL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "DTINIT",
+              "value": "0.0",
+              "description": "Initial time step (0 = determined by LS-DYNA)"
+            },
+            {
+              "name": "TSSFAC",
+              "value": "0.9",
+              "description": "Time step scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TERMINATION",
+          "parameters": [
+            {
+              "name": "ENDTIM",
+              "value": "0.05",
+              "description": "Termination time"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_ENERGY",
+          "parameters": [
+            {
+              "name": "HGEN",
+              "value": "2",
+              "description": "2 = compute hourglass energy"
+            },
+            {
+              "name": "RWEN",
+              "value": "2",
+              "description": "2 = compute rigid wall energy"
+            }
+          ]
+        },
+        {
+          "name": "*CONTACT_AUTOMATIC_SINGLE_SURFACE",
+          "parameters": [
+            {
+              "name": "SSID",
+              "value": "0",
+              "description": "Surface ID (ignored for SSTYP 5)"
+            },
+            {
+              "name": "MSID",
+              "value": "0",
+              "description": ""
+            },
+            {
+              "name": "SSTYP",
+              "value": "5",
+              "description": "5 = all parts"
+            },
+            {
+              "name": "FS",
+              "value": "0.3",
+              "description": "Static friction coefficient",
+              "card": 1
+            },
+            {
+              "name": "FD",
+              "value": "0.2",
+              "description": "Dynamic friction coefficient",
+              "card": 1
+            },
+            {
+              "name": "SFS",
+              "value": "1.0",
+              "description": "Slave penalty stiffness scale factor",
+              "card": 2
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_BINARY_D3PLOT",
+          "parameters": [
+            {
+              "name": "DT",
+              "value": "0.001",
+              "description": "Output interval"
+            }
+          ]
+        }
+      ]
+    },
+    "ls_dyna_showcase_advanced": {
+      "name": "LS-DYNA Showcase: Advanced Impact",
+      "level": "full",
+      "description": "Advanced impact example with eroding contact and adaptive meshing",
+      "keywords": [
+        {
+          "name": "*CONTROL_ADAPTIVE",
+          "parameters": [
+            {
+              "name": "ADPFREQ",
+              "value": "0.001",
+              "description": "Adaptive refinement interval"
+            },
+            {
+              "name": "ADPTOL",
+              "value": "0.1",
+              "description": "Adaptive error tolerance"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_TIMESTEP",
+          "parameters": [
+            {
+              "name": "DTINIT",
+              "value": "0.0",
+              "description": "Initial time step (0 = determined by LS-DYNA)"
+            },
+            {
+              "name": "TSSFAC",
+              "value": "0.9",
+              "description": "Time step scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*CONTROL_CONTACT",
+          "parameters": [
+            {
+              "name": "SLSFAC",
+              "value": "0.1",
+              "description": "Penalty scale factor"
+            }
+          ]
+        },
+        {
+          "name": "*CONTACT_ERODING_SINGLE_SURFACE",
+          "parameters": [
+            {
+              "name": "SSID",
+              "value": "0",
+              "description": "Surface ID (ignored for SSTYP 5)"
+            },
+            {
+              "name": "MSID",
+              "value": "0",
+              "description": ""
+            },
+            {
+              "name": "SSTYP",
+              "value": "5",
+              "description": "5 = all parts"
+            },
+            {
+              "name": "FS",
+              "value": "0.15",
+              "description": "Static friction coefficient",
+              "card": 1
+            },
+            {
+              "name": "FD",
+              "value": "0.1",
+              "description": "Dynamic friction coefficient",
+              "card": 1
+            },
+            {
+              "name": "SFS",
+              "value": "1.0",
+              "description": "Slave penalty stiffness scale factor",
+              "card": 2
+            },
+            {
+              "name": "ISYM",
+              "value": "0",
+              "description": "Symmetry plane option",
+              "card": 3
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_BINARY_D3PLOT",
+          "parameters": [
+            {
+              "name": "DT",
+              "value": "0.0005",
+              "description": "Output interval"
+            }
+          ]
+        },
+        {
+          "name": "*DATABASE_HISTORY_NODE",
+          "parameters": [
+            {
+              "name": "ID1",
+              "value": "1",
+              "description": "Node ID"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
