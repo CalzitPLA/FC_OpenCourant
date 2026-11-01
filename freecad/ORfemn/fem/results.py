@@ -95,6 +95,13 @@ def femmesh_from_vtu(data, node_ids, displacement):
     return mesh
 
 
+def _post_vtk_result_data(res):
+    """Argument for ObjectsFem.makePostVtkResult: FreeCAD 1.0 takes the result object,
+    1.1 a list that it expands (``[result]`` or a multi-step ``[results, values, unit, description]``)."""
+    major, minor = (int(v) for v in FreeCAD.Version()[:2])
+    return [res] if (major, minor) >= (1, 1) else res
+
+
 def load_result(doc, vtu_path, name="OpenRadiossResult", analysis=None, femmesh=None, time=None):
     """Create a Fem::ResultMechanical (+ result mesh and pipeline) from ``vtu_path``.
 
@@ -154,7 +161,7 @@ def load_result(doc, vtu_path, name="OpenRadiossResult", analysis=None, femmesh=
     res = resulttools.add_principal_stress_std(res)
     res = resulttools.fill_femresult_stats(res)
 
-    pipeline = ObjectsFem.makePostVtkResult(doc, res, name)
+    pipeline = ObjectsFem.makePostVtkResult(doc, _post_vtk_result_data(res), name)
     if analysis is not None:
         analysis.addObject(pipeline)
     pipeline.recomputeChildren()
