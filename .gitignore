@@ -21,3 +21,13 @@ docs/*.out
 # Scraped example data (re-downloadable via tools/examples/*.py)
 data/examples/
 data/.doc_cache/
+
+# Scraped Altair Radioss documentation (copyrighted; re-download with
+# tools/keyword_db/download_docs.py) and keyword database archives built from it
+data/docs/
+data/local_documentation/
+data/Keyword documentation/
+data/archiv/
+
+# Backup files
+*.bak
