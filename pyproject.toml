@@ -21,7 +21,8 @@ requires-python = ">=3.8"
 dependencies = []
 
 [project.urls]
-source = "https://hexascan.de"
+source = "https://github.com/CalzitPLA/ORfe"
+homepage = "https://hexascan.de"
 
 [tool.setuptools]
 packages = ["freecad.ORfemn", "freecad.ORfemn.commands", "freecad.ORfemn.gui", "freecad.ORfemn.fem"]
