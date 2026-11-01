@@ -8,7 +8,7 @@ import FreeCAD
 from femsolver import run
 from femtools import membertools
 
-from .. import radioss_runner
+from .. import radioss_runner, settings
 from . import deck_writer, model, results
 
 JOB_NAME = "radioss"
@@ -16,9 +16,7 @@ RESULT_PREFIX = "OpenRadiossResult"
 
 
 def installation():
-    path = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/ORfemn").GetString(
-        "OpenRadiossPath", radioss_runner.DEFAULT_INSTALL)
-    return radioss_runner.Installation(path)
+    return settings.installation()
 
 
 class Check(run.Check):
@@ -29,8 +27,8 @@ class Check(run.Check):
         self.checkSupported([(t,) for t in model.SUPPORTED_CONSTRAINTS])
         problems = installation().problems()
         if problems:
-            self.report.error("; ".join(problems) + ". Set the OpenRadioss folder in the 'Run OpenRadioss' dialog "
-                              "of the OpenRadioss workbench (default ~/OpenRadioss).")
+            self.report.error("; ".join(problems) + ". Set the solver folder (or download OpenCourant) in "
+                              "Edit > Preferences > OpenRadioss.")
             self.fail()
 
 
@@ -130,16 +128,20 @@ class Results(run.Results):
         prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Fem/General")
         doc = self.analysis.Document
         if not prefs.GetBool("KeepResultsOnReRun", False):
-            for obj in list(self.analysis.Group):
-                if obj.Name.startswith((RESULT_PREFIX, "Pipeline_" + RESULT_PREFIX)):
-                    doc.removeObject(obj.Name)
+            old = [obj.Name for obj in self.analysis.Group if obj.Name.startswith(RESULT_PREFIX)]
+            old_pipelines = [obj.Name for obj in self.analysis.Group
+                             if obj.Name.startswith("Pipeline_" + RESULT_PREFIX)]
+            for name in old:
+                doc.removeObject(name)
+            # pipelines have a 3D view: remove them in the main thread (queued before the new one)
+            results.in_main_thread(lambda: [doc.removeObject(n) for n in old_pipelines if doc.getObject(n)])
         last = os.path.join(self.directory, frames[-1])
         mesh_obj = membertools.get_mesh_to_solve(self.analysis)[0]
         end_time = self.solver.EndTime.getValueAs("s").Value  # UserString rounds to 2 decimals
-        result, pipeline = results.load_result(doc, last, RESULT_PREFIX, self.analysis,
-                                               femmesh=mesh_obj.FemMesh, time=end_time)
+        result, _pipeline = results.load_result(doc, last, RESULT_PREFIX, self.analysis,
+                                                femmesh=mesh_obj.FemMesh, time=end_time,
+                                                pipeline_label=f"Pipeline {RESULT_PREFIX} (t = {end_time:g} s)")
         result.Label = f"{RESULT_PREFIX} (t = {end_time:g} s)"
-        pipeline.Label = f"Pipeline {RESULT_PREFIX} (t = {end_time:g} s)"
         self.pushStatus(f"Loaded {frames[-1]} as '{result.Label}' (max. displacement "
                         f"{max(result.DisplacementLengths or [0]):.4g} mm, max. von Mises "
                         f"{max(result.vonMises or [0]):.4g} MPa). "

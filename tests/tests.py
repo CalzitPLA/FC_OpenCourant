@@ -324,7 +324,7 @@ class RadiossRunnerTest(unittest.TestCase):
         self.assertTrue(radioss_runner.Installation("/nonexistent").problems())
 
 
-@unittest.skipIf(radioss_runner.Installation().problems(), "OpenRadioss not installed in ~/OpenRadioss")
+@unittest.skipIf(radioss_runner.Installation().problems(), "OpenCourant/OpenRadioss not installed (~/OpenCourant, ~/OpenRadioss, ...)")
 class OpenRadiossIntegrationTest(unittest.TestCase):
     """Runs the real solver on the basic template (about 1 s)."""
 
@@ -427,7 +427,7 @@ class DeckWriterTest(unittest.TestCase):
         self.assertNotIn("\n999, ", deck)
 
 
-@unittest.skipIf(radioss_runner.Installation().problems(), "OpenRadioss not installed in ~/OpenRadioss")
+@unittest.skipIf(radioss_runner.Installation().problems(), "OpenCourant/OpenRadioss not installed (~/OpenCourant, ~/OpenRadioss, ...)")
 class FemDeckIntegrationTest(unittest.TestCase):
     """The deck writer output runs in OpenRadioss and bends the block the right way."""
 
@@ -494,6 +494,130 @@ class BasicKFileTest(unittest.TestCase):
     def test_no_line_longer_than_80(self):
         for line in self.deck.splitlines():
             self.assertLessEqual(len(line), 80, line)
+
+
+
+def fake_installation(root, executable=True, cfg=True):
+    """A directory tree that looks like an unpacked release (empty executables)."""
+    inst = radioss_runner.Installation(root)
+    os.makedirs(os.path.join(root, "exec"), exist_ok=True)
+    for tool in ("starter", "engine", "anim_to_vtk"):
+        path = inst.executable(tool)
+        with open(path, "w") as f:
+            f.write("")
+        os.chmod(path, 0o755 if executable else 0o644)
+    if cfg:
+        os.makedirs(os.path.join(root, "hm_cfg_files", "config", "CFG"), exist_ok=True)
+    os.makedirs(os.path.join(root, "extlib", "hm_reader", inst.libdir), exist_ok=True)
+    os.makedirs(os.path.join(root, "extlib", "h3d", "lib", inst.libdir), exist_ok=True)
+    return inst
+
+
+class InstallationSetupTest(unittest.TestCase):
+    """Finding, checking and downloading a solver installation (preference page backend)."""
+
+    def test_candidate_order(self):
+        paths = radioss_runner.candidate_paths(environ={"OPENRADIOSS_PATH": "/x/or", "OPENCOURANT_PATH": "/x/oc"},
+                                               home="/h")
+        self.assertEqual(paths[:4], ["/x/oc", "/x/or", "/h/OpenCourant", "/h/OpenRadioss"])
+
+    def test_detect_prefers_first_usable(self):
+        with tempfile.TemporaryDirectory() as home:
+            os.makedirs(os.path.join(home, "OpenCourant"))  # empty: not usable
+            fake_installation(os.path.join(home, "OpenRadioss"))
+            found = radioss_runner.detect_installation(environ={}, home=home)
+            self.assertEqual(found.path, os.path.join(home, "OpenRadioss"))
+            self.assertIsNone(radioss_runner.detect_installation(environ={}, home=os.path.join(home, "none")))
+
+    def test_requisites(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            inst = fake_installation(tmp, cfg=False)
+            items = {name: ok for name, ok, _detail in inst.requisites()}
+            self.assertTrue(items["Solver folder"])
+            self.assertTrue(items["starter executable"])
+            self.assertFalse(items["Reader configuration"])
+            inst = fake_installation(tmp, executable=False)
+            items = {name: ok for name, ok, _detail in inst.requisites()}
+            self.assertTrue(items["Reader configuration"])
+            self.assertEqual(items["engine executable"], inst.ext == ".exe")
+
+    def test_release_asset_name(self):
+        self.assertEqual(radioss_runner.release_asset_name("Linux", "x86_64"), "OpenCourant_linux64.zip")
+        self.assertEqual(radioss_runner.release_asset_name("Linux", "aarch64"), "OpenCourant_linuxa64.zip")
+        self.assertEqual(radioss_runner.release_asset_name("Windows", "AMD64"), "OpenCourant_win64.zip")
+        with self.assertRaises(radioss_runner.OpenRadiossError):
+            radioss_runner.release_asset_name("Darwin", "arm64")
+
+    def test_latest_release_skips_prereleases(self):
+        import json
+        releases = [
+            {"tag_name": "rc", "prerelease": True, "assets": [{"name": "OpenCourant_linux64.zip",
+                                                               "browser_download_url": "u0", "size": 1}]},
+            {"tag_name": "latest-20261011", "assets": [
+                {"name": "OpenCourant_win64.zip", "browser_download_url": "w", "size": 2},
+                {"name": "OpenCourant_linux64.zip", "browser_download_url": "u1", "size": 83933903}]},
+        ]
+        tag, url, size = radioss_runner.latest_release("OpenCourant_linux64.zip", fetch=lambda _u: json.dumps(releases))
+        self.assertEqual((tag, url, size), ("latest-20261011", "u1", 83933903))
+        with self.assertRaises(radioss_runner.OpenRadiossError):
+            radioss_runner.latest_release("OpenCourant_other.zip", fetch=lambda _u: json.dumps(releases))
+
+    def make_release_zip(self, path, extra=None):
+        import zipfile
+        with zipfile.ZipFile(path, "w") as z:
+            info = zipfile.ZipInfo("OpenCourant/exec/starter_linux64_gf")
+            info.external_attr = (0o100755 << 16)
+            z.writestr(info, "#!/bin/sh\n")
+            z.writestr("OpenCourant/hm_cfg_files/config/CFG/README", "cfg")
+            for name in extra or []:
+                z.writestr(name, "x")
+
+    def test_extract_release_keeps_executable_bit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = os.path.join(tmp, "release.zip")
+            self.make_release_zip(archive)
+            path = radioss_runner.extract_release(archive, os.path.join(tmp, "OpenCourant_latest"))
+            self.assertEqual(path, os.path.join(tmp, "OpenCourant_latest", "OpenCourant"))
+            if os.name == "posix":
+                self.assertTrue(os.access(os.path.join(path, "exec", "starter_linux64_gf"), os.X_OK))
+
+    def test_extract_release_rejects_unsafe_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = os.path.join(tmp, "evil.zip")
+            self.make_release_zip(archive, extra=["../outside.txt"])
+            with self.assertRaises(radioss_runner.OpenRadiossError):
+                radioss_runner.extract_release(archive, os.path.join(tmp, "target"))
+            self.assertFalse(os.path.exists(os.path.join(tmp, "outside.txt")))
+
+    def test_download_and_cancel(self):
+        import pathlib
+        with tempfile.TemporaryDirectory() as tmp:
+            source = os.path.join(tmp, "source.bin")
+            with open(source, "wb") as f:
+                f.write(os.urandom(3 * 1024))
+            url = pathlib.Path(source).as_uri()
+            seen = []
+            target = radioss_runner.download(url, os.path.join(tmp, "copy.bin"),
+                                             lambda done, total: seen.append((done, total)), chunk_size=1024)
+            with open(target, "rb") as a, open(source, "rb") as b:
+                self.assertEqual(a.read(), b.read())
+            self.assertEqual(seen[-1], (3072, 3072))
+            with self.assertRaises(radioss_runner.OpenRadiossError):
+                radioss_runner.download(url, os.path.join(tmp, "cancelled.bin"), lambda d, t: False, chunk_size=1024)
+            self.assertFalse(os.path.exists(os.path.join(tmp, "cancelled.bin")))
+            self.assertFalse(os.path.exists(os.path.join(tmp, "cancelled.bin.part")))
+
+    def test_test_run_reports_missing_installation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ok, message = radioss_runner.Installation(os.path.join(tmp, "nothing")).test_run(kfile_format.BASIC_K_FILE)
+            self.assertFalse(ok)
+            self.assertIn("not found", message)
+
+    @unittest.skipIf(radioss_runner.Installation().problems(), "OpenCourant/OpenRadioss not installed")
+    def test_test_run_with_real_solver(self):
+        ok, message = radioss_runner.Installation().test_run(kfile_format.BASIC_K_FILE)
+        self.assertTrue(ok, message)
+        self.assertIn("0 errors", message)
 
 
 if __name__ == "__main__":

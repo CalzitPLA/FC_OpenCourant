@@ -7,12 +7,50 @@ a file (its field list stays empty), so the result goes through
 Fem::ResultMechanical: node displacements by NODE_ID, element stress tensors
 averaged to the nodes, von Mises / principal stresses and statistics computed
 by FreeCAD's resulttools, and a post-processing pipeline built from it.
+
+The FEM solver framework runs the Results task in a worker thread while the
+main thread waits for it. Recomputing a pipeline updates its 3D view, which
+must happen in the main thread: done from the worker it deadlocks the GUI.
+So in the GUI the pipeline is built in the main thread, as soon as the solver
+run returns to the event loop (see ``in_main_thread``).
 """
 
 import threading
 import xml.etree.ElementTree as ET
 
 import FreeCAD
+
+if FreeCAD.GuiUp:
+    from PySide import QtCore
+
+    class _MainThreadCaller(QtCore.QObject):
+        """Runs callables in the thread this object lives in (created in the main thread at import)."""
+
+        call = QtCore.Signal(object)
+
+        def __init__(self):
+            super().__init__()
+            self.call.connect(self._run, QtCore.Qt.QueuedConnection)
+
+        def _run(self, function):
+            try:
+                function()
+            except Exception as e:  # shown in the report view, nothing can catch it here
+                FreeCAD.Console.PrintError(f"OpenRadioss: loading the result pipeline failed: {e}\n")
+
+    _caller = _MainThreadCaller()
+    _caller.moveToThread(QtCore.QCoreApplication.instance().thread())  # in case of a first import in a worker
+
+
+def in_main_thread(function):
+    """Run ``function`` now if this is the main thread (or there is no GUI), else queue it there.
+
+    Returns the function's result when it ran now, otherwise None.
+    """
+    if not FreeCAD.GuiUp or threading.current_thread() is threading.main_thread():
+        return function()
+    _caller.call.emit(function)
+    return None
 
 # vtk cell type -> number of nodes, element kind
 _VTK_CELLS = {3: (2, "edge"), 5: (3, "face"), 9: (4, "face"), 10: (4, "volume"),
@@ -74,18 +112,40 @@ def element_stresses(data):
     return stresses
 
 
+def element_plastic_strains(data):
+    """{element id: equivalent plastic strain} of solids and shells (empty without plastic material)."""
+    arrays = data["arrays"]
+    ids = [int(float(v)) for v in arrays["ELEMENT_ID"][1]] if "ELEMENT_ID" in arrays else []
+    strains = {}
+    for name in ("3DELEM_Plastic_Strain", "2DELEM_Plastic_Strain"):
+        if name in arrays:
+            for eid, value in zip(ids, arrays[name][1]):
+                value = float(value)
+                if eid > 0 and value > strains.get(eid, 0.0):
+                    strains[eid] = value
+    return strains
+
+
 def femmesh_from_vtu(data, node_ids, displacement):
-    """A FemMesh in the undeformed configuration from the result's own geometry."""
+    """A FemMesh in the undeformed configuration from the result's own geometry.
+
+    Points with NODE_ID 0 are display geometry without a model node (rigid walls,
+    for example); they and the cells using them are left out.
+    """
     import Fem
     mesh = Fem.FemMesh()
     points = data["points"]
     for i, nid in enumerate(node_ids):
+        if nid <= 0:
+            continue
         d = displacement.get(nid, (0.0, 0.0, 0.0))
         mesh.addNode(points[3 * i] - d[0], points[3 * i + 1] - d[1], points[3 * i + 2] - d[2], nid)
     element_ids = [int(float(v)) for v in data["arrays"]["ELEMENT_ID"][1]]
     for eid, cell, vtk_type in zip(element_ids, data["cells"], data["types"]):
         n, kind = _VTK_CELLS.get(vtk_type, (0, None))
         nodes = [node_ids[i] for i in cell[:n]]
+        if eid <= 0 or any(nid <= 0 for nid in nodes):
+            continue
         if kind == "volume":
             mesh.addVolume(nodes, eid)
         elif kind == "face":
@@ -102,11 +162,14 @@ def _post_vtk_result_data(res):
     return [res] if (major, minor) >= (1, 1) else res
 
 
-def load_result(doc, vtu_path, name="OpenRadiossResult", analysis=None, femmesh=None, time=None):
+def load_result(doc, vtu_path, name="OpenRadiossResult", analysis=None, femmesh=None, time=None,
+                pipeline_label=None):
     """Create a Fem::ResultMechanical (+ result mesh and pipeline) from ``vtu_path``.
 
     ``femmesh`` is the analysis mesh (node and element ids match the deck);
     without it the mesh is rebuilt from the result file. Returns (result, pipeline).
+    Called from a worker thread in the GUI, the pipeline is created later in the
+    main thread and None is returned for it.
     """
     import ObjectsFem
     from femresult import resulttools
@@ -142,6 +205,17 @@ def load_result(doc, vtu_path, name="OpenRadiossResult", analysis=None, femmesh=
             count[n] = count.get(n, 0) + 1
     node_numbers = sorted(femmesh.Nodes)
 
+    plastic = element_plastic_strains(data)
+    node_peeq = {}
+    if any(plastic.values()):
+        sums, hits = {}, {}
+        for eid, nodes in elements.items():
+            if eid in plastic:
+                for n in nodes:
+                    sums[n] = sums.get(n, 0.0) + plastic[eid]
+                    hits[n] = hits.get(n, 0) + 1
+        node_peeq = {n: sums[n] / hits[n] for n in sums}
+
     res = ObjectsFem.makeResultMechanical(doc, name)
     mesh_obj = ObjectsFem.makeMeshResult(doc, name + "_Mesh")
     mesh_obj.FemMesh = femmesh
@@ -151,6 +225,8 @@ def load_result(doc, vtu_path, name="OpenRadiossResult", analysis=None, femmesh=
     components = ("NodeStressXX", "NodeStressYY", "NodeStressZZ", "NodeStressXY", "NodeStressXZ", "NodeStressYZ")
     for k, prop in enumerate(components):
         setattr(res, prop, [node_stress[n][k] / count[n] if n in count else 0.0 for n in node_numbers])
+    if node_peeq and hasattr(res, "Peeq"):  # shown as "Equivalent Plastic Strain" in the pipeline
+        res.Peeq = [node_peeq.get(n, 0.0) for n in node_numbers]
     if time is not None and hasattr(res, "Time"):
         res.Time = time
     if analysis is not None:
@@ -161,15 +237,18 @@ def load_result(doc, vtu_path, name="OpenRadiossResult", analysis=None, femmesh=
     res = resulttools.add_principal_stress_std(res)
     res = resulttools.fill_femresult_stats(res)
 
-    pipeline = ObjectsFem.makePostVtkResult(doc, _post_vtk_result_data(res), name)
-    if analysis is not None:
-        analysis.addObject(pipeline)
-    pipeline.recomputeChildren()
-    pipeline.recompute()
-    mesh_obj.Visibility = False
-    # The FEM solver framework runs the Results task in a worker thread; view objects
-    # (Qt) must only be touched from the main thread.
-    if FreeCAD.GuiUp and threading.current_thread() is threading.main_thread():
-        pipeline.ViewObject.updateColorBars()
-    doc.recompute()
-    return res, pipeline
+    def make_pipeline():
+        pipeline = ObjectsFem.makePostVtkResult(doc, _post_vtk_result_data(res), name)
+        if pipeline_label:
+            pipeline.Label = pipeline_label
+        if analysis is not None:
+            analysis.addObject(pipeline)
+        pipeline.recomputeChildren()
+        pipeline.recompute()
+        mesh_obj.Visibility = False
+        if FreeCAD.GuiUp:
+            pipeline.ViewObject.updateColorBars()
+        doc.recompute()
+        return pipeline
+
+    return res, in_main_thread(make_pipeline)

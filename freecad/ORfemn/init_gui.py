@@ -7,12 +7,13 @@ import os
 import FreeCAD as App
 import FreeCADGui as Gui
 
-from . import icon_path
+from . import ICONPATH, icon_path
 
 TRANSLATIONSPATH = os.path.join(os.path.dirname(__file__), "resources", "translations")
 
 Gui.addLanguagePath(TRANSLATIONSPATH)
 Gui.updateLocale()
+Gui.addIconPath(ICONPATH)  # also provides the "preferences-openradioss" icon of the preference page
 
 
 class OpenRadiossWorkbench(Gui.Workbench):
@@ -42,6 +43,7 @@ class OpenRadiossWorkbench(Gui.Workbench):
         from .commands.open_cache_viewer import OpenCacheViewer
         from .commands.template_editor_command import TemplateEditorCommand
         from .commands.run_solver_command import RunSolverCommand
+        from .commands.preferences_command import PreferencesCommand
 
         Gui.addCommand('KeywordEditor', KeywordEditorCommand())
         Gui.addCommand('CreateRadiossModel', CreateRadiossModel())
@@ -50,15 +52,23 @@ class OpenRadiossWorkbench(Gui.Workbench):
         Gui.addCommand('OpenCacheViewer', OpenCacheViewer())
         Gui.addCommand('TemplateEditor', TemplateEditorCommand())
         Gui.addCommand('RunOpenRadioss', RunSolverCommand())
+        Gui.addCommand('OpenRadiossPreferences', PreferencesCommand())
 
         self.appendToolbar("OpenRadioss", self.COMMANDS)
-        self.appendMenu("OpenRadioss", self.COMMANDS)
+        self.appendMenu("OpenRadioss", self.COMMANDS + ["Separator", "OpenRadiossPreferences"])
 
     def GetClassName(self):
         return "Gui::PythonWorkbench"
 
 
 Gui.addWorkbench(OpenRadiossWorkbench())
+
+# Edit > Preferences > OpenRadioss: solver folder, requirements check, OpenCourant download
+try:
+    from .gui.preferences import PreferencesPage
+    Gui.addPreferencePage(PreferencesPage, "OpenRadioss")
+except Exception as e:
+    App.Console.PrintWarning(f"OpenRadioss: preference page not available: {e}\n")
 
 # OpenRadioss as a FEM solver: registered at start so the FEM workbench shows it too
 try:

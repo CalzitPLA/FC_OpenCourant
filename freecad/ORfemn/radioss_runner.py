@@ -19,15 +19,24 @@ environment, and ``run_job`` runs everything synchronously (used by the tests
 and for scripting). The FreeCAD dialog runs the same commands with QProcess.
 """
 
+import json
 import math
 import os
 import platform
 import re
 import shutil
 import subprocess
+import tempfile
+import urllib.request
+import zipfile
 from xml.sax.saxutils import quoteattr
 
-DEFAULT_INSTALL = os.path.join(os.path.expanduser("~"), "OpenRadioss")
+# OpenRadioss was discontinued in October 2026; OpenCourant is its community continuation
+# with the same release layout and executable names. Both folder names are looked for.
+INSTALL_DIR_NAMES = ("OpenCourant", "OpenRadioss")
+DEFAULT_INSTALL = os.path.join(os.path.expanduser("~"), INSTALL_DIR_NAMES[0])
+RELEASES_API = "https://api.github.com/repos/OpenCourant/OpenCourant/releases"
+RELEASES_PAGE = "https://github.com/OpenCourant/OpenCourant/releases"
 
 # Libraries the OpenRadioss binaries need that the FreeCAD Flatpak runtime lacks.
 # They are copied from the host (visible at /run/host inside the sandbox).
@@ -47,9 +56,16 @@ def in_flatpak():
 
 
 class Installation:
-    """An OpenRadioss installation (the unpacked release directory)."""
+    """An OpenRadioss / OpenCourant installation (the unpacked release directory).
 
-    def __init__(self, path=DEFAULT_INSTALL):
+    Without ``path`` the first usable folder of ``candidate_paths()`` is taken
+    (``DEFAULT_INSTALL`` if there is none).
+    """
+
+    def __init__(self, path=None):
+        if path is None:
+            found = detect_installation()
+            path = found.path if found else DEFAULT_INSTALL
         self.path = os.path.abspath(os.path.expanduser(path))
         system, machine = platform.system(), platform.machine().lower()
         if system == "Windows":
@@ -70,6 +86,70 @@ class Installation:
         missing = [os.path.basename(self.executable(t)) for t in ("starter", "engine", "anim_to_vtk")
                    if not os.path.isfile(self.executable(t))]
         return [f"Missing in {os.path.join(self.path, 'exec')}: {', '.join(missing)}"] if missing else []
+
+    def requisites(self):
+        """What a run needs, as a list of (name, ok, detail) for display."""
+        items = [("Solver folder", os.path.isdir(self.path), self.path)]
+        for tool in ("starter", "engine", "anim_to_vtk"):
+            exe = self.executable(tool)
+            if not os.path.isfile(exe):
+                items.append((f"{tool} executable", False, f"missing: {exe}"))
+            else:
+                runnable = self.ext == ".exe" or os.access(exe, os.X_OK)
+                items.append((f"{tool} executable", runnable, exe if runnable else f"not executable: {exe}"))
+        cfg = os.path.join(self.path, "hm_cfg_files", "config", "CFG")
+        items.append(("Reader configuration", os.path.isdir(cfg), cfg if os.path.isdir(cfg) else f"missing: {cfg}"))
+        for name, sub in (("hm_reader library", ("hm_reader", self.libdir)), ("h3d library", ("h3d", "lib", self.libdir))):
+            folder = os.path.join(self.path, "extlib", *sub)
+            items.append((name, os.path.isdir(folder), folder if os.path.isdir(folder) else f"missing: {folder}"))
+        if in_flatpak() and self.arch == "linux64_gf":
+            for lib in FLATPAK_MISSING_LIBS:
+                copied = os.path.exists(os.path.join(self.flatpak_compat_dir, lib))
+                on_host = os.path.exists(os.path.join(FLATPAK_HOST_LIB_DIR, lib))
+                detail = ("copied to " + self.flatpak_compat_dir if copied else
+                          "found on the host, copied before the first run" if on_host else
+                          f"not found in {FLATPAK_HOST_LIB_DIR}: install it on the host system")
+                items.append((f"{lib} (Flatpak)", copied or on_host, detail))
+        return items
+
+    def test_run(self, deck_text, timeout=120):
+        """Run the starter on ``deck_text`` in a temporary folder. Returns (ok, message).
+
+        This finds problems a file check cannot, e.g. reader configuration files
+        that do not match the executables.
+        """
+        problems = self.problems()
+        if problems:
+            return False, "; ".join(problems)
+        try:
+            self.prepare_flatpak()
+        except OSError as e:
+            return False, f"Cannot copy the Flatpak compatibility libraries: {e}"
+        with tempfile.TemporaryDirectory(prefix="orfe_check_") as tmp:
+            deck = os.path.join(tmp, "install_check.k")
+            with open(deck, "w") as f:
+                f.write(deck_text)
+            try:
+                result = subprocess.run(self.starter_command(deck), cwd=tmp, env=self.environment(1),
+                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                        errors="replace", timeout=timeout)
+            except (OSError, subprocess.TimeoutExpired) as e:
+                return False, f"The starter could not be run: {e}"
+            output = result.stdout or ""
+            commit = re.search(r"CommitID:\s*(\w+)", output)
+            version = f" (commit {commit.group(1)[:10]})" if commit else ""
+            listing = os.path.join(tmp, "install_check_0000.out")
+            errors, warnings = listing_summary(listing)
+            if result.returncode == 0 and errors == 0:
+                return True, f"The starter{version} read the test deck: 0 errors, {warnings or 0} warnings."
+            messages = listing_messages(listing) or [
+                " ".join(line.strip() for line in block.splitlines() if line.strip())
+                for block in re.findall(r"ERROR :(.*?)-{20,}", output, re.S)]
+            detail = "; ".join(m for m in messages if m)
+            if not detail:
+                tail = output.strip().splitlines()
+                detail = tail[-1].strip() if tail else "no output"
+            return False, f"The starter{version} failed (exit code {result.returncode}): {detail}"
 
     @property
     def flatpak_compat_dir(self):
@@ -119,6 +199,114 @@ class Installation:
 
     def anim_to_vtk_command(self, animation_file):
         return [self.executable("anim_to_vtk"), os.path.basename(animation_file)]
+
+
+def candidate_paths(environ=None, home=None):
+    """Folders where an installation is looked for, in order."""
+    environ = os.environ if environ is None else environ
+    home = home or os.path.expanduser("~")
+    paths = [environ.get("OPENCOURANT_PATH"), environ.get("OPENRADIOSS_PATH")]
+    paths += [os.path.join(home, name) for name in INSTALL_DIR_NAMES]
+    if platform.system() != "Windows":
+        paths += [os.path.join("/opt", name) for name in INSTALL_DIR_NAMES]
+    unique = []
+    for path in paths:
+        if path and path not in unique:
+            unique.append(path)
+    return unique
+
+
+def detect_installation(environ=None, home=None):
+    """The first usable installation in ``candidate_paths()``, or None."""
+    for path in candidate_paths(environ, home):
+        installation = Installation(path)
+        if not installation.problems():
+            return installation
+    return None
+
+
+# --- downloading a release ---------------------------------------------
+
+def release_asset_name(system=None, machine=None):
+    """Name of the release archive for this platform, e.g. OpenCourant_linux64.zip."""
+    system = system or platform.system()
+    machine = (machine or platform.machine()).lower()
+    if system == "Darwin":
+        raise OpenRadiossError("OpenCourant provides no macOS release (Linux x86-64/arm64 and Windows only). "
+                               "On macOS the deck tools work; run the solver on Linux or Windows, or build "
+                               "OpenCourant from source.")
+    if system == "Windows":
+        return "OpenCourant_win64.zip"
+    if machine in ("aarch64", "arm64"):
+        return "OpenCourant_linuxa64.zip"
+    return "OpenCourant_linux64.zip"
+
+
+def latest_release(asset_name=None, fetch=None):
+    """(tag, download url, size in bytes) of the newest OpenCourant release with ``asset_name``.
+
+    ``fetch(url)`` returns the response body; by default the GitHub API is asked.
+    """
+    asset_name = asset_name or release_asset_name()
+    if fetch is None:
+        def fetch(url):
+            request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json",
+                                                           "User-Agent": "FreeCAD-ORfemn"})
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return response.read()
+    releases = json.loads(fetch(RELEASES_API + "?per_page=10"))
+    for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        for asset in release.get("assets", []):
+            if asset.get("name") == asset_name:
+                return release["tag_name"], asset["browser_download_url"], int(asset.get("size") or 0)
+    raise OpenRadiossError(f"No OpenCourant release with {asset_name} found at {RELEASES_PAGE}")
+
+
+def download(url, target, progress=None, chunk_size=1 << 20):
+    """Download ``url`` to ``target``. ``progress(done, total)`` may return False to cancel."""
+    partial = target + ".part"
+    cancelled = False
+    request = urllib.request.Request(url, headers={"User-Agent": "FreeCAD-ORfemn"})
+    with urllib.request.urlopen(request, timeout=60) as response, open(partial, "wb") as f:
+        total, done = int(response.headers.get("Content-Length") or 0), 0
+        while True:
+            block = response.read(chunk_size)
+            if not block:
+                break
+            f.write(block)
+            done += len(block)
+            if progress is not None and progress(done, total) is False:
+                cancelled = True
+                break
+    if cancelled or (total and done < total):
+        os.remove(partial)
+        raise OpenRadiossError("Download cancelled" if cancelled else f"Download incomplete ({done} of {total} bytes)")
+    os.replace(partial, target)
+    return target
+
+
+def extract_release(archive, parent):
+    """Unpack a release archive into ``parent`` (keeping executable bits); returns the installation folder.
+
+    The folder is the one that contains ``exec/`` (``<parent>/OpenCourant`` for the official archives).
+    """
+    parent = os.path.abspath(parent)
+    os.makedirs(parent, exist_ok=True)
+    with zipfile.ZipFile(archive) as z:
+        for info in z.infolist():
+            target = os.path.abspath(os.path.join(parent, info.filename))
+            if os.path.commonpath([parent, target]) != parent:
+                raise OpenRadiossError(f"Unsafe path in archive: {info.filename}")
+            z.extract(info, parent)
+            mode = (info.external_attr >> 16) & 0o777
+            if mode and not info.is_dir():
+                os.chmod(target, mode)
+    for root, dirs, _files in os.walk(parent):
+        if "exec" in dirs and "hm_cfg_files" in dirs:
+            return root
+    raise OpenRadiossError(f"No OpenCourant installation (exec/ and hm_cfg_files/) found in {archive}")
 
 
 def job_name(deck):

@@ -6,18 +6,13 @@ import re
 import FreeCAD
 from PySide import QtCore, QtGui, QtWidgets
 
-from .. import radioss_runner
-
-PARAMS = "User parameter:BaseApp/Preferences/Mod/ORfemn"
-
-
-def params():
-    return FreeCAD.ParamGet(PARAMS)
+from .. import radioss_runner, settings
+from ..settings import params
 
 
 def installation():
-    """The configured OpenRadioss installation."""
-    return radioss_runner.Installation(params().GetString("OpenRadiossPath", radioss_runner.DEFAULT_INSTALL))
+    """The configured (or automatically found) OpenCourant / OpenRadioss installation."""
+    return settings.installation()
 
 
 def default_workdir(doc, name):
@@ -118,11 +113,15 @@ class RunDialog(QtWidgets.QDialog):
                                        "(all frames: open the .pvd file in ParaView)")
         self.results_button.clicked.connect(self.load_results)
         self.results_button.setEnabled(False)
+        prefs_button = QtWidgets.QPushButton("Preferences...")
+        prefs_button.setToolTip("Solver folder, requirements check and OpenCourant download")
+        prefs_button.clicked.connect(self.open_preferences)
         close_button = QtWidgets.QPushButton("Close")
         close_button.clicked.connect(self.close)
         for button in (self.run_button, self.stop_button, self.folder_button, self.results_button):
             buttons.addWidget(button)
         buttons.addStretch()
+        buttons.addWidget(prefs_button)
         buttons.addWidget(close_button)
         layout.addLayout(buttons)
 
@@ -140,12 +139,20 @@ class RunDialog(QtWidgets.QDialog):
         problems = self.installation().problems()
         if problems:
             self.status_label.setText("<b style='color:#d9534f'>" + "<br>".join(problems) + "</b><br>"
-                                      "Download OpenRadioss from github.com/OpenRadioss/OpenRadioss/releases "
-                                      "and select the unpacked OpenRadioss folder.")
+                                      "Select the solver folder, or set it up (and download OpenCourant) with "
+                                      "<b>Preferences...</b> (Edit &gt; Preferences &gt; OpenRadioss).")
         else:
             self.status_label.setText("Ready.")
         self.run_button.setEnabled(not problems and self.process is None)
         return not problems
+
+    def open_preferences(self):
+        import FreeCADGui
+        FreeCADGui.showPreferences("OpenRadioss")
+        if self.process is None or self.run_button.isEnabled():
+            self.install_edit.setText(installation().path)
+            self.threads_spin.setValue(min(settings.threads(), self.threads_spin.maximum()))
+            self.check_installation()
 
     def append(self, text):
         self.log.appendPlainText(text.rstrip("\n"))
