@@ -5,7 +5,7 @@ Explicit dynamics (impact, crash, drop tests, sudden loads) in FreeCAD with
 as a solver of the **FEM workbench**, and as an **LS-DYNA keyword deck** (`.k`) workbench with editor,
 templates and a run dialog. Package name `ORfemn`, workbench name *OpenRadioss*.
 
-**[Installation](INSTALL.md)** · [Overview page](docs/index.html) (open locally, or enable GitHub Pages
+**[Installation](INSTALL.md)** · **[Testing](TESTING.md)** · [Overview page](docs/index.html) (open locally, or enable GitHub Pages
 for `/docs`) · [Introduction (PDF)](docs/ORfe_Introduction.pdf) ·
 [Examples](examples/) · [Screenshots and video](#screenshots-and-video) ·
 [Example analysis (PDF, AI-generated, not human-verified)](docs/ORfe_Example_Analysis.pdf)
@@ -19,6 +19,8 @@ for `/docs`) · [Introduction (PDF)](docs/ORfe_Introduction.pdf) ·
    `git clone https://github.com/CalzitPLA/FC_OpenCourant` into FreeCAD's `Mod` folder; restart FreeCAD.
 3. Solver: **Edit → Preferences → OpenRadioss → Download OpenCourant...** (Linux, Windows; there is no
    macOS release), then **Test installation**.
+4. Test it: **[TESTING.md](TESTING.md)** – a one-minute check with the cantilever example, or the
+   automatic GUI test with one command.
 
 [INSTALL.md](INSTALL.md) has the commands for Linux, Windows and macOS and a troubleshooting table.
 The OpenRadioss project was discontinued in October 2026; OpenCourant releases have the same layout and
@@ -130,6 +132,8 @@ full video (70 s, no sound): [`docs/video/freecad_gui_test.mp4`](docs/video/free
 | `docs/` | Introduction (`ORfe_Introduction.tex/.pdf`), example analysis (`ORfe_Example_Analysis.tex/.pdf`, AI-generated, not human-verified), `images/`, `screenshots/`, `video/`, older workflow documentation |
 
 ## Tests
+
+How to check an installation (quick check, GUI test, expected output, reporting): [TESTING.md](TESTING.md).
 
 ```shell
 python tests/tests.py                                         # or: pixi run test

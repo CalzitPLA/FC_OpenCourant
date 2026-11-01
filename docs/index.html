@@ -84,7 +84,7 @@
      the free explicit solver that continues OpenRadioss. Set up a FEM analysis as usual, or write an LS-DYNA keyword deck,
      and solve it explicitly, without leaving FreeCAD.</p>
   <div class="buttons">
-    <a class="btn primary" href="#install">Install in 3 steps</a>
+    <a class="btn primary" href="#install">Install in 4 steps</a>
     <a class="btn" href="#video">Watch the 70 s video</a>
     <a class="btn" href="https://github.com/CalzitPLA/FC_OpenCourant">GitHub repository</a>
   </div>
@@ -110,7 +110,7 @@
 <p class="muted">The automated GUI test in FreeCAD 1.1.4: preferences check, a cantilever and a plate in the FEM workbench,
    and a Taylor impact keyword deck. No sound.</p>
 
-<h2 id="install">Install in 3 steps</h2>
+<h2 id="install">Install and test in 4 steps</h2>
 <ol class="steps">
   <li><h3>Install FreeCAD 1.0 or newer</h3>
     <p>From <a href="https://www.freecad.org/downloads.php">freecad.org</a>, or with one command:</p>
@@ -125,7 +125,7 @@
 mod = os.path.join(FreeCAD.getUserAppDataDir(), "Mod"); target = os.path.join(mod, "FC_OpenCourant")
 data = urllib.request.urlopen("https://github.com/CalzitPLA/FC_OpenCourant/archive/refs/heads/main.zip").read()
 shutil.rmtree(target, ignore_errors=True); zipfile.ZipFile(io.BytesIO(data)).extractall(mod)
-os.rename(os.path.join(mod, "FC_OpenCourant-main"), target); print("Installed to", target)</code></pre>
+os.rename(os.path.join(mod, "FC_OpenCourant-main"), target); print("Installed to", target, "- restart FreeCAD, then see TESTING.md")</code></pre>
     <details><summary>Prefer git?</summary>
       <p>Clone into FreeCAD's <code>Mod</code> folder (FreeCAD 1.1 shown; for 1.0 leave out <code>v1-1/</code>):</p>
       <pre><code>git clone https://github.com/CalzitPLA/FC_OpenCourant ~/.local/share/FreeCAD/v1-1/Mod/FC_OpenCourant</code></pre>
@@ -142,6 +142,15 @@ os.rename(os.path.join(mod, "FC_OpenCourant-main"), target); print("Installed to
       <p><b>Windows (PowerShell)</b></p>
       <pre><code>Invoke-WebRequest https://github.com/OpenCourant/OpenCourant/releases/latest/download/OpenCourant_win64.zip -OutFile $env:TEMP\oc.zip; Expand-Archive $env:TEMP\oc.zip -DestinationPath $HOME</code></pre>
       <p><b>macOS</b>: OpenCourant has no macOS release. The deck tools work, but solving has to happen on Linux or Windows.</p>
+    </details>
+  </li>
+  <li><h3>Test it</h3>
+    <p>Open <code>examples/cantilever_beam.FCStd</code>, switch to the FEM workbench, select <i>SolverOpenRadioss</i> and click
+       <b>Run solver calculations</b>: tip deflection about 0.187 mm. Or let the automatic GUI test do everything in a minute.
+       Both are explained in <a href="https://github.com/CalzitPLA/FC_OpenCourant/blob/main/TESTING.md"><b>TESTING.md</b></a>.</p>
+    <details><summary>Automatic GUI test (Linux)</summary>
+      <pre><code>sh ~/.var/app/org.freecad.FreeCAD/data/FreeCAD/v1-1/Mod/FC_OpenCourant/tests/run_gui_test.sh --flatpak</code></pre>
+      <p class="muted">Flatpak shown; for other installations and Windows see TESTING.md. It ends with <code>ALL PASS</code>.</p>
     </details>
   </li>
 </ol>
@@ -199,6 +208,7 @@ os.rename(os.path.join(mod, "FC_OpenCourant-main"), target); print("Installed to
 <table>
   <tr><th>Document</th><th>For</th></tr>
   <tr><td><a href="https://github.com/CalzitPLA/FC_OpenCourant/blob/main/INSTALL.md">INSTALL.md</a></td><td>All installation commands, troubleshooting</td></tr>
+  <tr><td><a href="https://github.com/CalzitPLA/FC_OpenCourant/blob/main/TESTING.md">TESTING.md</a></td><td>Check your installation: quick check, automatic GUI test, unit tests</td></tr>
   <tr><td><a href="ORfe_Introduction.pdf">Introduction (PDF, 6 pages)</a></td><td>Workflows, solver properties, testing, limitations</td></tr>
   <tr><td><a href="ORfe_Example_Analysis.pdf">Example analysis (PDF, 5 pages)</a> <span class="tag">AI-generated · not human-verified</span></td><td>Rough look at results and meshes of the examples</td></tr>
   <tr><td><a href="https://github.com/CalzitPLA/FC_OpenCourant/blob/main/README.md">README</a></td><td>Everything in one place, repository layout, tests</td></tr>

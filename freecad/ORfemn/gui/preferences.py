@@ -13,6 +13,26 @@ from .. import kfile_format, radioss_runner, settings
 OK, BAD = "#3c9a3c", "#d9534f"
 
 
+TESTING_URL = "https://github.com/CalzitPLA/FC_OpenCourant/blob/main/TESTING.md"
+
+
+def examples_folder():
+    """The examples/ folder of the installed workbench, or None (e.g. for a pip install)."""
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    folder = os.path.join(root, "examples")
+    return folder if os.path.isdir(folder) else None
+
+
+def next_steps_html():
+    """Where to go after a successful Test installation."""
+    folder = examples_folder()
+    where = (f"<a href='{QtCore.QUrl.fromLocalFile(folder).toString()}'>{html.escape(folder)}</a>"
+             if folder else "the examples/ folder of the workbench")
+    return (f"Next: open <b>cantilever_beam.FCStd</b> from {where} and run it in the FEM workbench "
+            f"(tip deflection about 0.187 mm), or run the automatic GUI test: "
+            f"<a href='{TESTING_URL}'>TESTING.md</a>.")
+
+
 class PreferencesPage:
     """Preference page (registered with FreeCADGui.addPreferencePage in init_gui.py)."""
 
@@ -66,7 +86,8 @@ class PreferencesPage:
         grid.addLayout(buttons, 3, 0, 1, 4)
         self.test_label = QtWidgets.QLabel()
         self.test_label.setWordWrap(True)
-        self.test_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        self.test_label.setOpenExternalLinks(True)
+        self.test_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
         grid.addWidget(self.test_label, 4, 0, 1, 4)
         grid.setColumnStretch(1, 1)
         layout.addWidget(solver)
@@ -132,7 +153,10 @@ class PreferencesPage:
         finally:
             QtWidgets.QApplication.restoreOverrideCursor()
         self.refresh()  # the Flatpak libraries may have been copied
-        self.test_label.setText(f"<span style='color:{OK if ok else BAD}'>{html.escape(message)}</span>")
+        text = f"<span style='color:{OK if ok else BAD}'>{html.escape(message)}</span>"
+        if ok:
+            text += "<br>" + next_steps_html()
+        self.test_label.setText(text)
         return ok
 
     def download(self):

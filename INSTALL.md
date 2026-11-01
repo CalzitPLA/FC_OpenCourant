@@ -18,13 +18,14 @@ OpenRadioss). About five minutes.
 
 **Any OS, no git needed:** open FreeCAD, *View → Panels → Python console*, paste this and press Enter, then
 restart FreeCAD. Running it again updates the workbench (it replaces the `FC_OpenCourant` folder).
+Then continue with step 3 and [test your installation](TESTING.md).
 
 ```python
 import FreeCAD, os, io, shutil, zipfile, urllib.request
 mod = os.path.join(FreeCAD.getUserAppDataDir(), "Mod"); target = os.path.join(mod, "FC_OpenCourant")
 data = urllib.request.urlopen("https://github.com/CalzitPLA/FC_OpenCourant/archive/refs/heads/main.zip").read()
 shutil.rmtree(target, ignore_errors=True); zipfile.ZipFile(io.BytesIO(data)).extractall(mod)
-os.rename(os.path.join(mod, "FC_OpenCourant-main"), target); print("Installed to", target)
+os.rename(os.path.join(mod, "FC_OpenCourant-main"), target); print("Installed to", target, "- restart FreeCAD, then see TESTING.md")
 ```
 
 **With git** (update later with `git pull`), clone into FreeCAD's `Mod` folder:
@@ -55,14 +56,15 @@ folder. The newest release for your platform is downloaded, unpacked, selected a
 Elsewhere? Set the folder (the one containing `exec/` and `hm_cfg_files/`) in *Edit → Preferences →
 OpenRadioss*. With the FreeCAD Flatpak the two host libraries the solver needs are copied automatically.
 
-## 4. Check
+## 4. Test it
 
-1. *Edit → Preferences → OpenRadioss*: every line has a green tick; **Test installation** reports
-   "read the test deck: 0 errors".
-2. Open `examples/cantilever_beam.FCStd` (in the workbench folder), switch to the FEM workbench, select
-   *SolverOpenRadioss*, click *Run solver calculations*: tip deflection about 0.187 mm.
-3. Optional, the full GUI test (about a minute): `tests/run_gui_test.sh` (Linux), or start FreeCAD with
-   `tests/freecad_gui_test.py` as argument on any OS. It ends with `ALL PASS`.
+Restart FreeCAD and follow **[TESTING.md](TESTING.md)**. The quick check takes a minute:
+
+1. *Edit → Preferences → OpenRadioss*: all green ticks, **Test installation** reports "0 errors".
+2. Open `examples/cantilever_beam.FCStd`, FEM workbench, select *SolverOpenRadioss*,
+   **Run solver calculations**: tip deflection about 0.187 mm.
+
+The automatic GUI test (one command, about a minute) is described there too, with the expected output.
 
 ## If something fails
 
