@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FC_OpenCourant</title>
+<meta name="description" content="Explicit dynamics in FreeCAD: OpenCourant / OpenRadioss as a FEM solver and an LS-DYNA keyword deck workbench.">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #5b6475; --line: #dde1e8;
+    --accent: #c0392b; --accent-soft: #fbeae8; --code: #eef0f4; --ok: #2e7d32; --warn: #9a6700;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14171c; --card: #1d2128; --text: #e7eaf0; --muted: #9aa3b2; --line: #2e343e;
+      --accent: #ff6b5b; --accent-soft: #3a2220; --code: #262b33; --ok: #6cc070; --warn: #e3b341;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14171c; --card: #1d2128; --text: #e7eaf0; --muted: #9aa3b2; --line: #2e343e;
+    --accent: #ff6b5b; --accent-soft: #3a2220; --code: #262b33; --ok: #6cc070; --warn: #e3b341;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 0 16px 48px; }
+  a { color: var(--accent); }
+  h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 8px; }
+  h2 { font-size: 1.35rem; margin: 40px 0 12px; }
+  h3 { font-size: 1.05rem; margin: 0 0 6px; }
+  p { margin: 0 0 10px; }
+  .muted { color: var(--muted); }
+  header { padding: 36px 0 8px; }
+  .tag { display: inline-block; font-size: .78rem; font-weight: 600; padding: 2px 8px; border-radius: 99px;
+         background: var(--accent-soft); color: var(--accent); margin-right: 6px; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 4px; }
+  .btn { display: inline-block; padding: 9px 16px; border-radius: 8px; text-decoration: none; font-weight: 600;
+         border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .grid { display: grid; gap: 14px; }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  video, .shot img, .card img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--line); }
+  .card img { height: 200px; object-fit: contain; background: #fff; }
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 0; }
+  .steps > li { counter-increment: step; position: relative; padding: 0 0 18px 44px; }
+  .steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 30px; height: 30px;
+         border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700;
+         display: flex; align-items: center; justify-content: center; }
+  pre { position: relative; background: var(--code); border-radius: 8px; padding: 34px 12px 10px; margin: 6px 0;
+        overflow-x: auto; font: 13px/1.5 ui-monospace, "Cascadia Code", "DejaVu Sans Mono", monospace; }
+  code { font-family: ui-monospace, "Cascadia Code", "DejaVu Sans Mono", monospace; font-size: .92em; }
+  .copy { position: absolute; top: 6px; right: 6px; font: 600 12px system-ui, sans-serif; padding: 3px 8px;
+          border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+  summary { cursor: pointer; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1.2fr; gap: 8px; align-items: center; }
+  .node { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .node.solver { border-color: var(--accent); }
+  .arrow { color: var(--muted); font-size: 1.4rem; text-align: center; }
+  .shots { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .shot { margin: 0; }
+  .shot figcaption { font-size: .88rem; color: var(--muted); margin-top: 4px; }
+  .note { border-left: 4px solid var(--warn); background: var(--card); padding: 10px 14px; border-radius: 0 8px 8px 0; }
+  .ok { color: var(--ok); font-weight: 600; }
+  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); font-size: .88rem; color: var(--muted); }
+  @media (max-width: 720px) {
+    .flow { grid-template-columns: 1fr; }
+    .arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <span class="tag">FreeCAD add-on</span><span class="tag">version 0.0.1 · alpha</span>
+  <h1>Crash, impact and sudden loads in FreeCAD</h1>
+  <p class="muted">FC_OpenCourant connects FreeCAD with <a href="https://github.com/OpenCourant/OpenCourant">OpenCourant</a>,
+     the free explicit solver that continues OpenRadioss. Set up a FEM analysis as usual, or write an LS-DYNA keyword deck,
+     and solve it explicitly, without leaving FreeCAD.</p>
+  <div class="buttons">
+    <a class="btn primary" href="#install">Install in 3 steps</a>
+    <a class="btn" href="#video">Watch the 70 s video</a>
+    <a class="btn" href="https://github.com/CalzitPLA/FC_OpenCourant">GitHub repository</a>
+  </div>
+</header>
+
+<h2 id="what">What you get</h2>
+<div class="grid g3">
+  <div class="card"><h3>A FEM workbench solver</h3>
+    <p><b>Solver OpenRadioss</b> sits next to CalculiX and Elmer. Mesh, material, constraints, then click
+    <i>Run solver calculations</i>. The results come back as normal FEM results.</p></div>
+  <div class="card"><h3>A keyword deck workbench</h3>
+    <p>Keyword Editor with 219 keywords, templates and a run dialog with a live log. For everything the FEM
+    translation does not cover: contact, plasticity, rigid walls, initial velocities.</p></div>
+  <div class="card"><h3>One-click solver set-up</h3>
+    <p><i>Edit → Preferences → OpenRadioss</i> downloads OpenCourant, checks all requirements and runs a test deck.</p></div>
+</div>
+
+<h2 id="video">See it run</h2>
+<video controls preload="metadata" poster="screenshots/5_taylor_result.png">
+  <source src="video/freecad_gui_test.mp4" type="video/mp4">
+  Your browser cannot play the video: <a href="video/freecad_gui_test.mp4">download it</a>.
+</video>
+<p class="muted">The automated GUI test in FreeCAD 1.1.4: preferences check, a cantilever and a plate in the FEM workbench,
+   and a Taylor impact keyword deck. No sound.</p>
+
+<h2 id="install">Install in 3 steps</h2>
+<ol class="steps">
+  <li><h3>Install FreeCAD 1.0 or newer</h3>
+    <p>From <a href="https://www.freecad.org/downloads.php">freecad.org</a>, or with one command:</p>
+    <details><summary>Linux</summary><pre><code>flatpak install flathub org.freecad.FreeCAD</code></pre></details>
+    <details><summary>Windows</summary><pre><code>winget install --id FreeCAD.FreeCAD</code></pre></details>
+    <details><summary>macOS</summary><pre><code>brew install --cask freecad</code></pre></details>
+  </li>
+  <li><h3>Install the workbench</h3>
+    <p>In FreeCAD open <i>View → Panels → Python console</i>, paste this, press Enter and restart FreeCAD.
+       It works on every system, and running it again updates the workbench.</p>
+<pre><code>import FreeCAD, os, io, shutil, zipfile, urllib.request
+mod = os.path.join(FreeCAD.getUserAppDataDir(), "Mod"); target = os.path.join(mod, "FC_OpenCourant")
+data = urllib.request.urlopen("https://github.com/CalzitPLA/FC_OpenCourant/archive/refs/heads/main.zip").read()
+shutil.rmtree(target, ignore_errors=True); zipfile.ZipFile(io.BytesIO(data)).extractall(mod)
+os.rename(os.path.join(mod, "FC_OpenCourant-main"), target); print("Installed to", target)</code></pre>
+    <details><summary>Prefer git?</summary>
+      <p>Clone into FreeCAD's <code>Mod</code> folder (FreeCAD 1.1 shown; for 1.0 leave out <code>v1-1/</code>):</p>
+      <pre><code>git clone https://github.com/CalzitPLA/FC_OpenCourant ~/.local/share/FreeCAD/v1-1/Mod/FC_OpenCourant</code></pre>
+      <p class="muted">Flatpak, Windows and macOS folders: see <a href="https://github.com/CalzitPLA/FC_OpenCourant/blob/main/INSTALL.md">INSTALL.md</a>.</p>
+    </details>
+  </li>
+  <li><h3>Set up the solver</h3>
+    <p><i>Edit → Preferences → OpenRadioss → <b>Download OpenCourant...</b></i>, pick a folder, done.
+       Then click <b>Test installation</b>: <span class="ok">every line gets a green tick</span>.</p>
+    <details><summary>Or by hand</summary>
+      <p>Unpack a release into your home folder; <code>~/OpenCourant</code> is found automatically.</p>
+      <p><b>Linux</b></p>
+      <pre><code>curl -L https://github.com/OpenCourant/OpenCourant/releases/latest/download/OpenCourant_linux64.zip -o /tmp/oc.zip && unzip -q /tmp/oc.zip -d ~</code></pre>
+      <p><b>Windows (PowerShell)</b></p>
+      <pre><code>Invoke-WebRequest https://github.com/OpenCourant/OpenCourant/releases/latest/download/OpenCourant_win64.zip -OutFile $env:TEMP\oc.zip; Expand-Archive $env:TEMP\oc.zip -DestinationPath $HOME</code></pre>
+      <p><b>macOS</b>: OpenCourant has no macOS release. The deck tools work, but solving has to happen on Linux or Windows.</p>
+    </details>
+  </li>
+</ol>
+<p class="muted">Something not working? The <a href="https://github.com/CalzitPLA/FC_OpenCourant/blob/main/INSTALL.md#if-something-fails">troubleshooting table</a> covers the usual messages.</p>
+
+<h2 id="how">How it fits together</h2>
+<div class="flow">
+  <div class="node"><b>FEM analysis</b><br><span class="muted">mesh, material, constraints</span></div>
+  <div class="arrow">→</div>
+  <div class="node"><b>deck</b> <code>.k</code><br><span class="muted">written for you, or by you in the Keyword Editor</span></div>
+  <div class="arrow">→</div>
+  <div class="node solver"><b>OpenCourant</b><br><span class="muted">starter → engine → VTK</span><br><b>→ FEM result + ParaView frames</b></div>
+</div>
+<p class="muted" style="margin-top:10px">Both ways share the solver settings and the result loading. The FEM solver's <code>AdditionalKeywords</code>
+   property adds hand-written keywords to a generated deck.</p>
+
+<h2 id="examples">Three examples, a few seconds each</h2>
+<div class="grid g3">
+  <div class="card"><img src="images/cantilever_beam.png" alt="Cantilever beam, von Mises stress">
+    <h3 style="margin-top:10px">Cantilever beam</h3>
+    <p class="muted">FEM workbench, hexahedra. Tip deflection 0.187 mm, beam theory 0.192 mm.</p></div>
+  <div class="card"><img src="images/plate_sudden_pressure.png" alt="Plate under sudden pressure">
+    <h3 style="margin-top:10px">Plate, sudden pressure</h3>
+    <p class="muted">FEM workbench, shells. Oscillates with 2.2 ms period (theory 2.24) and peaks of twice the static value.</p></div>
+  <div class="card"><img src="images/taylor_impact.png" alt="Taylor impact, plastic strain">
+    <h3 style="margin-top:10px">Taylor impact</h3>
+    <p class="muted">Keyword deck. Steel bar at 200 m/s on a rigid wall: 20 % shorter, plastic strain up to 0.81.</p></div>
+</div>
+<p class="muted">Files: <a href="https://github.com/CalzitPLA/FC_OpenCourant/tree/main/examples">examples/</a>.</p>
+
+<h2 id="screenshots">Screenshots</h2>
+<div class="shots">
+  <figure class="shot"><a href="screenshots/1_preferences.png"><img src="screenshots/1_preferences.png" alt="Preferences page" loading="lazy"></a>
+    <figcaption>Preferences: solver found, all requirements met, test passed</figcaption></figure>
+  <figure class="shot"><a href="screenshots/2_cantilever_result.png"><img src="screenshots/2_cantilever_result.png" alt="Cantilever result" loading="lazy"></a>
+    <figcaption>Cantilever in the FEM workbench</figcaption></figure>
+  <figure class="shot"><a href="screenshots/3_plate_result.png"><img src="screenshots/3_plate_result.png" alt="Plate result" loading="lazy"></a>
+    <figcaption>Plate under sudden pressure</figcaption></figure>
+  <figure class="shot"><a href="screenshots/4_taylor_run_dialog.png"><img src="screenshots/4_taylor_run_dialog.png" alt="Run dialog" loading="lazy"></a>
+    <figcaption>Run OpenRadioss dialog</figcaption></figure>
+  <figure class="shot"><a href="screenshots/5_taylor_result.png"><img src="screenshots/5_taylor_result.png" alt="Taylor result" loading="lazy"></a>
+    <figcaption>Taylor impact, plastic strain</figcaption></figure>
+  <figure class="shot"><a href="screenshots/6_keyword_editor.png"><img src="screenshots/6_keyword_editor.png" alt="Keyword Editor" loading="lazy"></a>
+    <figcaption>Keyword Editor</figcaption></figure>
+</div>
+
+<h2 id="limits">Good to know</h2>
+<div class="note">
+  <p><b>Alpha.</b> Tested on Linux (FreeCAD 1.0.0 and 1.1.4). Windows should work but is untested, and OpenCourant has no macOS build.</p>
+  <p><b>Use hexahedra or fine tetra4 meshes.</b> In our tests the solver's 10-node tetrahedron came out about 35 % too soft.</p>
+  <p><b>Explicit means dynamic.</b> Ramp the load over several vibration periods for quasi-static answers.</p>
+</div>
+
+<h2 id="docs">Read more</h2>
+<table>
+  <tr><th>Document</th><th>For</th></tr>
+  <tr><td><a href="https://github.com/CalzitPLA/FC_OpenCourant/blob/main/INSTALL.md">INSTALL.md</a></td><td>All installation commands, troubleshooting</td></tr>
+  <tr><td><a href="ORfe_Introduction.pdf">Introduction (PDF, 6 pages)</a></td><td>Workflows, solver properties, testing, limitations</td></tr>
+  <tr><td><a href="ORfe_Example_Analysis.pdf">Example analysis (PDF, 5 pages)</a> <span class="tag">AI-generated · not human-verified</span></td><td>Rough look at results and meshes of the examples</td></tr>
+  <tr><td><a href="https://github.com/CalzitPLA/FC_OpenCourant/blob/main/README.md">README</a></td><td>Everything in one place, repository layout, tests</td></tr>
+</table>
+
+<footer>
+  <p>FC_OpenCourant is free software under the LGPL-2.1-or-later. OpenCourant/OpenRadioss is a separate program under the AGPL-3.0.</p>
+  <p><b>No warranty:</b> provided "as is". Check simulation results before you rely on them.
+     This page and the documents were prepared with the help of an AI assistant; the example analysis is AI-generated and not verified by a human.</p>
+  <p>Maintainer: Nicholas Herrmann · Feedback: FreeCAD forum (FEM) or <a href="https://github.com/CalzitPLA/FC_OpenCourant/issues">GitHub issues</a></p>
+</footer>
+</main>
+<script>
+  // Copy buttons for the command boxes
+  document.querySelectorAll("pre").forEach(function (pre) {
+    var button = document.createElement("button");
+    button.className = "copy"; button.type = "button"; button.textContent = "Copy";
+    button.addEventListener("click", function () {
+      var text = pre.querySelector("code").innerText;
+      var done = function () { button.textContent = "Copied"; setTimeout(function () { button.textContent = "Copy"; }, 1500); };
+      if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done, function () { button.textContent = "Select + Ctrl+C"; }); }
+      else { button.textContent = "Select + Ctrl+C"; }
+    });
+    pre.appendChild(button);
+  });
+</script>
+</body>
+</html>

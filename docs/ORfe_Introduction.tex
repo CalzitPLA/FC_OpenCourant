@@ -25,7 +25,7 @@
 \newcommand{\cmd}[1]{\textsf{\textbf{#1}}}
 \newcommand{\unit}[1]{\,\mathrm{#1}}
 
-\title{ORfe -- OpenRadioss Workbench for FreeCAD\\[4pt]
+\title{FC\_OpenCourant -- OpenCourant / OpenRadioss in FreeCAD\\[4pt]
        \large A short introduction}
 \author{Nicholas Herrmann}
 \date{November 2026 \quad (workbench version 0.0.1)}
@@ -34,7 +34,8 @@
 \maketitle
 
 \begin{abstract}
-\noindent ORfe brings the explicit finite element solver OpenRadioss into FreeCAD. It adds
+\noindent FC\_OpenCourant (package \texttt{ORfemn}, called ORfe here) brings the explicit finite
+element solver OpenCourant, the continuation of OpenRadioss, into FreeCAD. It adds
 \emph{OpenRadioss} as a solver of the FEM workbench, next to CalculiX, Elmer, Mystran and Z88,
 so an analysis set up in the usual way (mesh, material, constraints) can be solved as an explicit
 dynamic problem and post-processed in FreeCAD. A separate \emph{OpenRadioss} workbench edits
@@ -64,25 +65,49 @@ works with OpenCourant as it is; ``OpenRadioss'' in this text means either.
 
 \begin{enumerate}
   \item Install FreeCAD 1.0 or newer (tested with 1.0.0 and the 1.1.4 Flatpak).
-  \item Download a solver release from the OpenCourant releases page (on Linux
-        \texttt{OpenCourant\_\allowbreak linux64.zip}) and unpack it to \texttt{\textasciitilde/OpenRadioss},
-        the default location. Another folder can be chosen in the \cmd{Run OpenRadioss} dialog;
-        the FEM solver uses the same setting.
-  \item Put the workbench into FreeCAD's \texttt{Mod} directory and restart FreeCAD:
+  \item Install the workbench: paste the one-line installer from \texttt{INSTALL.md} into
+        FreeCAD's Python console (any operating system), or clone the repository into FreeCAD's
+        \texttt{Mod} folder, then restart FreeCAD:
 \begin{lstlisting}
-git clone https://github.com/CalzitPLA/ORfe ~/.local/share/FreeCAD/Mod/ORfe
-# Flatpak: ~/.var/app/org.freecad.FreeCAD/data/FreeCAD/Mod/ORfe
+git clone https://github.com/CalzitPLA/FC_OpenCourant ~/.local/share/FreeCAD/v1-1/Mod/FC_OpenCourant
 \end{lstlisting}
+        (FreeCAD 1.0: without \texttt{v1-1/}; Flatpak, Windows and macOS folders in \texttt{INSTALL.md}).
+  \item Open \cmd{Edit $\rightarrow$ Preferences $\rightarrow$ OpenRadioss}
+        (Figure~\ref{fig:prefs}) and click \cmd{Download OpenCourant...}: the newest release for
+        the platform is downloaded, unpacked, selected and tested. An existing installation is found
+        automatically in \texttt{\textasciitilde/OpenCourant} or \texttt{\textasciitilde/OpenRadioss},
+        or can be selected with \cmd{Browse...}.
 \end{enumerate}
-Inside the FreeCAD Flatpak the solver binaries miss two host libraries (\texttt{libcrypt.so.1},
-\texttt{libapr-1.so.0}); ORfe copies them automatically to
-\texttt{<solver>/\allowbreak extlib/\allowbreak flatpak\_compat} before the first run.
+The page lists what a run needs: the executables, the reader configuration, the libraries and,
+inside the FreeCAD Flatpak, the two host libraries the solver lacks there (copied automatically).
+\cmd{Test installation} runs the starter on a small deck; this also catches reader configuration
+files that do not match the executables. OpenCourant has releases for Linux (x86-64, arm64) and
+Windows, not for macOS: there the deck tools work, but the solver has to run elsewhere.
 
-\section{Workflow 1: OpenRadioss as a FEM workbench solver}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.82\linewidth]{images/preferences.png}
+\caption{\emph{Edit $\rightarrow$ Preferences $\rightarrow$ OpenRadioss} after \emph{Test installation}.}
+\label{fig:prefs}
+\end{figure}
 
-This is the quickest way in for FreeCAD FEM users. Set up an analysis as for CalculiX, then choose
-\cmd{Solve $\rightarrow$ Solver OpenRadioss} and run it with \cmd{Run solver calculations} (or by
-double-clicking the solver). Figure~\ref{fig:pipeline} shows what happens behind the scenes.
+\section{How the solver is embedded: two ways in}
+
+ORfe offers two entry points, which share everything from the deck onwards
+(Figure~\ref{fig:pipeline}):
+\begin{description}[font=\sffamily\bfseries,leftmargin=1em]
+  \item[FEM workbench] The user sets up an ordinary FEM analysis and adds \emph{Solver OpenRadioss}.
+        FreeCAD's solver framework runs four tasks: \emph{Check} (mesh, material, solver found),
+        \emph{Prepare} (the deck writer translates nodes, elements, materials, constraints and
+        loads into \texttt{radioss.k}), \emph{Solve} (starter, engine, conversion) and \emph{Results}.
+  \item[Keyword deck] The deck is LS-DYNA keyword text in a FreeCAD text object, written with the
+        Keyword Editor, templates or by hand, so every keyword the solver's LS-DYNA reader supports
+        can be used (contact, plasticity, rigid walls, initial velocities, \dots). The \emph{Run
+        OpenRadioss} dialog runs it in the background with a live log.
+\end{description}
+Both run the same three programs, use the same solver settings and load the result the same way.
+They also combine: the FEM solver's \texttt{AdditionalKeywords} property appends the keywords of a
+text object to the generated deck.
 
 \begin{figure}[ht]
 \centering
@@ -94,21 +119,32 @@ double-clicking the solver). Figure~\ref{fig:pipeline} shows what happens behind
     node distance=5mm and 7mm]
   \node[box=blue!8]   (fc)   {FEM analysis\\ \footnotesize mesh, material,\\ \footnotesize constraints};
   \node[box,right=of fc]   (deck) {deck writer\\ \footnotesize \texttt{radioss.k}};
+  \node[box=blue!8,below=6mm of fc] (kw) {keyword deck\\ \footnotesize text object,\\ \footnotesize editor, templates};
+  \node[box,right=of kw] (dlg) {\footnotesize Run\\ \footnotesize OpenRadioss\\ \footnotesize dialog};
   \node[box=orange!10,right=of deck] (st) {starter\\ \footnotesize checks deck};
   \node[box=orange!10,right=of st]   (en) {engine\\ \footnotesize explicit time\\ \footnotesize integration};
-  \node[box,below=11mm of en]  (vtk)  {anim\_to\_vtk\\ \footnotesize frames $\rightarrow$ \texttt{.vtu}, \texttt{.pvd}};
-  \node[box=blue!8,left=of vtk] (res)  {FEM result\\ \footnotesize displacement,\\ \footnotesize von Mises};
-  \node[box=blue!8,left=of res] (pp)   {post-processing\\ \footnotesize pipeline};
-  \node[box=green!8,left=of pp] (pv)   {ParaView\\ \footnotesize all frames};
+  \node[box=orange!10,below=6mm of en] (vtk) {anim\_to\_vtk\\ \footnotesize frames $\rightarrow$ \texttt{.vtu}, \texttt{.pvd}};
+  \node[box=blue!8,below=6mm of vtk] (res) {FEM result\\ \footnotesize + pipeline};
+  \node[box=green!8,left=of res] (pv) {ParaView\\ \footnotesize all frames};
   \draw[arr] (fc) -- (deck); \draw[arr] (deck) -- (st); \draw[arr] (st) -- (en);
-  \draw[arr] (en) -- (vtk);  \draw[arr] (vtk) -- (res); \draw[arr] (res) -- (pp);
-  \draw[arr,dashed] (vtk.south) |- ++(0,-5mm) -| (pv.south);
+  \draw[arr] (kw) -- (dlg); \draw[arr] (dlg.east) -| (st.south);
+  \draw[arr] (en) -- (vtk); \draw[arr] (vtk) -- (res); \draw[arr,dashed] (vtk.west) -| (pv.north);
+  \draw[arr,dotted] (kw.north) -- node[left,font=\scriptsize]{AdditionalKeywords} (fc.south);
   \node[font=\footnotesize\itshape,text=black!60,above=1mm of fc.north west,anchor=south west] {FreeCAD};
-  \node[font=\footnotesize\itshape,text=black!60,above=1mm of st.north west,anchor=south west] {OpenRadioss / OpenCourant};
+  \node[font=\footnotesize\itshape,text=black!60,above=1mm of st.north west,anchor=south west] {OpenCourant / OpenRadioss};
 \end{tikzpicture}
-\caption{Solving a FEM analysis with OpenRadioss. Blue: FreeCAD objects, orange: solver steps.}
+\caption{The two ways in. Top: FEM workbench (solver framework, deck writer). Bottom: keyword deck
+(Run OpenRadioss dialog). Blue: FreeCAD objects, orange: solver programs.}
 \label{fig:pipeline}
 \end{figure}
+
+\section{Workflow 1: OpenRadioss as a FEM workbench solver}
+
+This is the quickest way in for FreeCAD FEM users. Set up an analysis as for CalculiX, then choose
+\cmd{Solve $\rightarrow$ Solver OpenRadioss} and run it with \cmd{Run solver calculations} (or by
+double-clicking the solver), as in the upper path of Figure~\ref{fig:pipeline}.
+
+
 
 The last frame is loaded as a regular FEM mechanical result (displacements, von Mises and principal
 stresses, like CalculiX results) plus a post-processing pipeline. All frames stay in the working
@@ -165,22 +201,56 @@ For models beyond the FEM translation (contacts, other materials, initial veloci
 Both workflows meet in the \texttt{AdditionalKeywords} property: keywords written in the editor
 can extend a deck generated from a FEM analysis.
 
+\section{Examples}
+
+Three models in \texttt{examples/} solve in a few seconds each (Table~\ref{tab:examples});
+\texttt{examples/README.md} explains how to run them. A rough, AI-generated analysis of their
+results and meshes is in \texttt{docs/ORfe\_Example\_Analysis.pdf} (not verified by a human).
+
+\begin{table}[ht]
+\centering\small
+\begin{tabularx}{\linewidth}{@{}llX@{}}
+\toprule
+File & Way in & Result \\
+\midrule
+\texttt{cantilever\_beam} & FEM, hexahedra, ramp & tip deflection 0.187\,mm (beam theory 0.192\,mm) \\
+\texttt{plate\_sudden\_pressure} & FEM, shells, sudden load & oscillation with period 2.2\,ms (theory 2.24\,ms)
+                                   and peaks of $2\times$ the static deflection \\
+\texttt{taylor\_impact} & keyword deck & steel bar at 200\,m/s on a rigid wall: shortens by 20\,\%,
+                          plastic strain up to 0.81 \\
+\bottomrule
+\end{tabularx}
+\caption{Example models.}
+\label{tab:examples}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.36\linewidth]{images/taylor_impact.png}\hfill
+\includegraphics[width=0.58\linewidth]{images/cantilever_beam.png}
+\caption{Taylor impact (equivalent plastic strain) and cantilever (von Mises stress, deformation $\times100$).}
+\end{figure}
+
 \section{Testing}
 
 The workbench was tested on Debian 13 with FreeCAD 1.0.0 (Debian package), FreeCAD 1.1.4 (Flatpak)
 and OpenCourant \texttt{latest-20261011}:
 \begin{itemize}
-  \item 43 unit and integration tests (\texttt{python tests/tests.py}): \texttt{.k} formatting,
-        templates, deck writer, result conversion, and two real solver runs. All pass.
-  \item Headless FreeCAD script: a cantilever analysis (Gmsh mesh, steel, fixed face, tip force)
-        gets an OpenRadioss solver, writes the deck, solves through the FEM solver framework and
-        loads the result; the document is saved and restored with the solver object.
-  \item GUI smoke test (FreeCAD 1.1.4): workbench activation, all eight commands, Create Radioss
-        Model, Create Basic .k File, Keyword and Template Editor dialogs, and the
-        \emph{Solver OpenRadioss} entry in the FEM workbench toolbar.
+  \item 54 unit and integration tests (\texttt{python tests/tests.py}): \texttt{.k} formatting,
+        templates, deck writer, result conversion, solver detection, requirements check, release
+        download and unpacking, and three real solver runs. All pass.
+  \item Headless FreeCAD runs: a Gmsh cantilever analysis is solved through the FEM solver
+        framework in FreeCAD 1.0 and 1.1, and the document is saved and restored with the solver.
+  \item A GUI test (\texttt{tests/freecad\_gui\_test.py}, started by \texttt{tests/run\_gui\_test.sh})
+        drives FreeCAD like a user: the preference page with \emph{Test installation},
+        \emph{Run solver calculations} on the two FEM examples, the \emph{Run OpenRadioss} dialog with
+        \emph{Load Results in FEM} on the Taylor impact, and the editors. A recording of it is in
+        \texttt{docs/video/}, screenshots are in \texttt{docs/screenshots/}.
 \end{itemize}
-Testing found one incompatibility, now fixed: FreeCAD~1.1 changed the arguments of
-\texttt{ObjectsFem\allowbreak.makePostVtkResult}, so loading results failed there.
+Testing found and fixed three problems: FreeCAD~1.1 changed the arguments of
+\texttt{ObjectsFem\allowbreak.makePostVtkResult}; in the GUI, building the result pipeline from the
+solver framework's worker thread deadlocked FreeCAD (it is now built in the main thread); and
+results with a rigid wall failed to load, because the wall's display points have no node number.
 
 \paragraph{Accuracy check.}
 Table~\ref{tab:beam} compares the tip deflection of a steel cantilever
@@ -222,14 +292,20 @@ computed without mass scaling.}
         else can be added as keywords through \texttt{AdditionalKeywords}.
   \item For bending with hexahedra use at least two elements through the thickness.
   \item Tested on Linux; the code also handles Windows and arm64 executable names, but these
-        platforms are untested.
+        platforms are untested. OpenCourant has no macOS release.
 \end{itemize}
 
 \section{Source, license and feedback}
 
-Source code, issue tracker and this document: \url{https://github.com/CalzitPLA/ORfe}.
+Source code, issue tracker and documents:\\ \url{https://github.com/CalzitPLA/FC_OpenCourant}.\\
 ORfe is free software under the GNU Lesser General Public License, version~2.1 or later, like
 FreeCAD itself. OpenRadioss and OpenCourant are separate programs under the AGPL; ORfe only runs
 their executables. Feedback is welcome on the FreeCAD forum (FEM section) or as GitHub issues.
+
+\paragraph{No warranty.} The workbench, the examples and this document are provided ``as is'',
+without warranty of any kind; simulation results must be checked by a qualified engineer before
+they are relied on. This introduction was drafted with the help of an AI assistant from the test
+runs described above; the separate example analysis is entirely AI-generated and not verified by a
+human.
 
 \end{document}

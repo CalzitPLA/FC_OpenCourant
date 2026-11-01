@@ -1,41 +1,63 @@
-# ORfe – OpenRadioss Workbench for FreeCAD
+# FC_OpenCourant – OpenCourant / OpenRadioss workbench for FreeCAD
 
-Explicit dynamics in FreeCAD: OpenRadioss as a solver of the FEM workbench, plus a workbench to create,
-edit and run LS-DYNA format input decks (`.k` files, as read by OpenRadioss).
+Explicit dynamics (impact, crash, drop tests, sudden loads) in FreeCAD with
+[OpenCourant](https://github.com/OpenCourant/OpenCourant), the community continuation of OpenRadioss:
+as a solver of the **FEM workbench**, and as an **LS-DYNA keyword deck** (`.k`) workbench with editor,
+templates and a run dialog. Package name `ORfemn`, workbench name *OpenRadioss*.
 
-A short introduction (installation, workflows, testing, limitations) is in
-[`docs/ORfe_Introduction.pdf`](docs/ORfe_Introduction.pdf).
+**[Installation](INSTALL.md)** · [Overview page](docs/index.html) (open locally, or enable GitHub Pages
+for `/docs`) · [Introduction (PDF)](docs/ORfe_Introduction.pdf) ·
+[Examples](examples/) · [Screenshots and video](#screenshots-and-video) ·
+[Example analysis (PDF, AI-generated, not human-verified)](docs/ORfe_Example_Analysis.pdf)
 
-## Dependencies
+![Taylor impact: plastic strain](docs/images/taylor_impact.png)
 
-- FreeCAD >= 1.0 (Python 3, PySide provided by FreeCAD); tested with 1.0.0 and 1.1.4
-- For running simulations: [OpenCourant](https://github.com/OpenCourant/OpenCourant/releases), the
-  community continuation of OpenRadioss (unpack the release, e.g. to `~/OpenRadioss`; the path can be
-  changed in the run dialog). The OpenRadioss project was discontinued in October 2026 and its GitHub
-  repository removed; OpenCourant releases have the same layout and executable names, so older OpenRadioss
-  releases and OpenCourant both work.
+## Installation in short
 
-## Quick Start
+1. FreeCAD 1.0 or newer.
+2. Workbench: paste the one-liner from [INSTALL.md](INSTALL.md) into FreeCAD's Python console (any OS), or
+   `git clone https://github.com/CalzitPLA/FC_OpenCourant` into FreeCAD's `Mod` folder; restart FreeCAD.
+3. Solver: **Edit → Preferences → OpenRadioss → Download OpenCourant...** (Linux, Windows; there is no
+   macOS release), then **Test installation**.
 
-1. Clone, link or copy this repository into your FreeCAD `Mod` directory, e.g.
-   `git clone https://github.com/CalzitPLA/ORfe ~/.local/share/FreeCAD/Mod/ORfe`
-   (Flatpak: `~/.var/app/org.freecad.FreeCAD/data/FreeCAD/Mod/ORfe`), or install it with `pip install -e .`.
-2. Restart FreeCAD and select the **OpenRadioss** workbench.
-3. Use the toolbar:
-   - **Create Radioss Model** – new document with groups for parts, materials, loads, ...
-   - **Create Basic .k File** – adds a small, runnable single-shell deck as a text object
-   - **Keyword Editor** – browse keywords, fill in card fields, cache generated keywords,
-     or start from a template (*Templates* menu); **Update .k File** writes the cache into the document
-   - **Template Editor** – create, edit, duplicate, delete and reorder the templates of the
-     *Templates* menu, with a live preview (also under *Templates → Edit Templates...* in the Keyword Editor)
-   - **Open Cache Viewer** – inspect/remove cached keywords of the open editor
-   - **Export LS-DYNA .k File** – save a text object to a `.k` file
-   - **Run OpenRadioss** – run starter, engine and the VTK conversion on a keyword text object in the
-     background (live log, Stop), then load the result into FEM post-processing. All frames are written
-     as `.vtu` plus a `.pvd` series for ParaView. Inside the FreeCAD Flatpak the two host libraries the
-     solver needs (`libcrypt.so.1`, `libapr-1.so.0`) are copied to `<OpenRadioss>/extlib/flatpak_compat`.
+[INSTALL.md](INSTALL.md) has the commands for Linux, Windows and macOS and a troubleshooting table.
+The OpenRadioss project was discontinued in October 2026; OpenCourant releases have the same layout and
+executable names, so older OpenRadioss releases work too.
 
-### OpenRadioss in the FEM workbench
+## How it fits into FreeCAD: two ways in
+
+| | FEM workbench | OpenRadioss workbench (keyword deck) |
+|---|---|---|
+| You work with | an ordinary FEM analysis: mesh, material, constraints, *Solver OpenRadioss* | an LS-DYNA keyword text object (`.k` deck) |
+| The deck is | written by the workbench from the analysis (nodes, elements, materials, loads) | written by you: Keyword Editor, templates or plain text |
+| Run with | *Run solver calculations* (FEM solver framework) | *Run OpenRadioss* dialog (live log, Stop) |
+| Covers | linear elastic solids and shells, fixed/displacement constraints, force, pressure, self weight | everything the OpenCourant LS-DYNA reader supports (contact, plasticity, rigid walls, initial velocities, ...) |
+| Results | FEM result + pipeline in the analysis | FEM result + pipeline on *Load Results in FEM* |
+
+Both use the same solver settings (*Edit → Preferences → OpenRadioss*), run the same three steps
+(starter, engine, `anim_to_vtk`), and load results the same way: displacement, stresses, equivalent
+plastic strain; all frames as a `.pvd` series for ParaView. The two meet in the FEM solver's
+*AdditionalKeywords* property: a keyword text object whose keywords are appended to the generated deck.
+
+## Using the OpenRadioss workbench
+
+Toolbar and menu of the *OpenRadioss* workbench:
+
+- **Create Radioss Model** – new document with groups for parts, materials, loads, ...
+- **Create Basic .k File** – adds a small, runnable single-shell deck as a text object
+- **Keyword Editor** – browse keywords, fill in card fields, cache generated keywords,
+  or start from a template (*Templates* menu); **Update .k File** writes the cache into the document
+- **Template Editor** – create, edit, duplicate, delete and reorder the templates of the
+  *Templates* menu, with a live preview (also under *Templates → Edit Templates...* in the Keyword Editor)
+- **Open Cache Viewer** – inspect/remove cached keywords of the open editor
+- **Export LS-DYNA .k File** – save a text object to a `.k` file
+- **Run OpenRadioss** – run starter, engine and the VTK conversion on a keyword text object in the
+  background (live log, Stop), then load the result into FEM post-processing. All frames are written
+  as `.vtu` plus a `.pvd` series for ParaView. Inside the FreeCAD Flatpak the two host libraries the
+  solver needs (`libcrypt.so.1`, `libapr-1.so.0`) are copied to `<solver folder>/extlib/flatpak_compat`.
+- **OpenRadioss Preferences...** (menu) – solver folder, requirements check, OpenCourant download
+
+## OpenRadioss in the FEM workbench
 
 OpenRadioss is also available as a solver of FreeCAD's **FEM workbench** (*Solve* toolbar and menu:
 **Solver OpenRadioss**, next to CalculiX, Elmer, Mystran and Z88). Set up an analysis as usual
@@ -57,6 +79,7 @@ OpenRadioss is an **explicit dynamic** solver. Solver properties:
 Supported: volume meshes (tetra4, tetra10 native, hexa8, penta6, pyra5; second-order hexa/penta/pyra
 are reduced to corner nodes) and face meshes with a shell thickness; linear elastic materials (several
 via references); fixed and displacement (fixed components) constraints, force, pressure and self weight.
+Results contain displacements, stresses and, for plastic materials, the equivalent plastic strain.
 Other constraints are reported and ignored. For bending with hexahedra use at least two elements
 through the thickness.
 
@@ -72,32 +95,65 @@ The default templates live in `freecad/ORfemn/templates.json` and use consistent
 Templates edited in the Template Editor are saved per user to `<FreeCAD user data>/ORfemn/templates.json`
 (e.g. `~/.local/share/FreeCAD/ORfemn/`), which then replaces the defaults; *Reset to Defaults* removes it.
 
+## Examples
+
+| File | Workflow | Result |
+|---|---|---|
+| [`examples/cantilever_beam.FCStd`](examples/) | FEM workbench, hexahedra, ramp load | tip deflection 0.187 mm (beam theory 0.192 mm) |
+| [`examples/plate_sudden_pressure.FCStd`](examples/) | FEM workbench, shells, sudden pressure | oscillation around the static plate deflection with about twice its peak |
+| [`examples/taylor_impact.FCStd`](examples/) | keyword deck, Run OpenRadioss dialog | plastic bar hitting a rigid wall at 200 m/s |
+
+See [`examples/README.md`](examples/README.md) for how to run them.
+
+## Screenshots and video
+
+Taken from a recording of the GUI test (`tests/run_gui_test.sh --record`) in FreeCAD 1.1.4;
+full video (70 s, no sound): [`docs/video/freecad_gui_test.mp4`](docs/video/freecad_gui_test.mp4).
+
+| | |
+|---|---|
+| ![Preferences](docs/screenshots/1_preferences.png) Edit → Preferences → OpenRadioss: solver found, requirements met, Test installation passed | ![Cantilever](docs/screenshots/2_cantilever_result.png) Cantilever (FEM workbench): von Mises stress, deformation ×100 |
+| ![Plate](docs/screenshots/3_plate_result.png) Plate under sudden pressure (shells), deformation ×200 | ![Run dialog](docs/screenshots/4_taylor_run_dialog.png) Run OpenRadioss dialog after the Taylor impact run |
+| ![Taylor](docs/screenshots/5_taylor_result.png) Taylor impact: equivalent plastic strain | ![Keyword Editor](docs/screenshots/6_keyword_editor.png) Keyword Editor |
+
 ## Repository layout
 
 | Path | Contents |
 |---|---|
 | `freecad/ORfemn/` | The workbench package (the only part that gets installed) |
-| `tests/` | Unit tests for the FreeCAD-independent code |
+| `tests/` | `tests.py`: unit tests for the FreeCAD-independent code; `freecad_gui_test.py`: GUI test inside FreeCAD; `run_gui_test.sh`: runs it (and records it with `--record`) |
+| `examples/` | Example documents and the script that builds them |
 | `tools/keyword_db/` | Scripts that build `keywords_with_parameters.json`: `download_docs.py` (fetch the current Radioss LS-DYNA keyword docs into `data/docs/`), then `extract_cards.py` (card layouts, options, links; also runs `extract_field_info.py` for defaults and descriptions) |
 | `tools/examples/` | Scripts that download dynaexamples.com and extract `.k` files into `data/examples/` |
 | `tools/legacy/` | Old code kept for reference; not loaded by the workbench |
 | `data/` | Keyword list. The scraped Altair Radioss documentation (`data/docs/`, `data/local_documentation/`, `data/Keyword documentation/`), keyword database archives (`data/archiv/`) and examples (`data/examples/`) are not tracked by git; the scripts in `tools/` download or rebuild them |
-| `docs/` | Introduction (`ORfe_Introduction.tex/.pdf`) and older workflow documentation (LaTeX/PDF) |
+| `docs/` | Introduction (`ORfe_Introduction.tex/.pdf`), example analysis (`ORfe_Example_Analysis.tex/.pdf`, AI-generated, not human-verified), `images/`, `screenshots/`, `video/`, older workflow documentation |
 
 ## Tests
 
 ```shell
-python tests/tests.py   # or: pixi run test
+python tests/tests.py                                         # or: pixi run test
+tests/run_gui_test.sh                                         # GUI test in FreeCAD (--flatpak, --native)
+tests/run_gui_test.sh --flatpak --record test.mp4             # ... and record it (GNOME screencast)
+FreeCAD tests/freecad_gui_test.py                             # GUI test directly, exits with 0 on success
 ```
 
-The tests cover the FreeCAD-independent `.k` formatting code, templates, deck writer and result
-conversion. Two integration tests run the real solver; they are skipped unless OpenRadioss/OpenCourant
-is installed in `~/OpenRadioss`.
+`tests.py` covers the FreeCAD-independent code: `.k` formatting, templates, deck writer, result
+conversion, solver detection, requirements check and release download/unpacking. Three tests run the
+real solver and are skipped when none is found. `freecad_gui_test.py` drives FreeCAD like a user: the
+preference page (*Test installation*), *Run solver calculations* on the two FEM examples, the *Run
+OpenRadioss* dialog with *Load Results in FEM* on the Taylor impact, and the editors; it writes a report
+and screenshots to `$ORFE_OUT` (default `~/orfe_gui_test_<date>`).
 
-## License
+## License and no warranty
 
 LGPL-2.1-or-later, like FreeCAD (see [LICENSE](LICENSE)). OpenRadioss and OpenCourant are separate
 programs under the AGPL-3.0; the workbench only runs their executables.
+
+**No warranty.** The workbench, the examples and the documents are provided "as is", without warranty
+of any kind. Simulation results must be checked by a qualified engineer before they are relied on. The
+example analysis (`docs/ORfe_Example_Analysis.pdf`) was generated by an AI model and has not been
+verified by a human.
 
 ## Maintainer
 

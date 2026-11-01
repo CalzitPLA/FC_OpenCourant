@@ -30,7 +30,7 @@ from .version import __version__
 
 __title__ = "OpenRadioss Workbench"
 __author__ = "Nicholas Herrmann"
-__url__ = "https://github.com/CalzitPLA/ORfe"
+__url__ = "https://github.com/CalzitPLA/FC_OpenCourant"
 __license__ = "LGPL-2.1-or-later"
 
 ICONPATH = os.path.join(os.path.dirname(__file__), "resources", "icons")
